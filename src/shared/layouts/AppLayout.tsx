@@ -160,7 +160,7 @@ export const AppLayoutContent: React.FC = () => {
               aria-label="View system notifications"
             >
               <Bell className="w-4.5 h-4.5" aria-hidden="true" />
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#2563EB] text-white text-[9px] font-extrabold flex items-center justify-center">
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#244A70] text-white text-[9px] font-extrabold flex items-center justify-center">
                 2
               </span>
             </button>
@@ -270,7 +270,7 @@ export const AppLayoutContent: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.BILLING.UPGRADE_ENTERPRISE)}
-                className="px-3.5 py-1.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
                 Upgrade
               </button>
