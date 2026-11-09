@@ -14,8 +14,10 @@ export interface AuthoritativeContractContext {
   organizationName?: string;
   contractId?: string;
   contractNumber?: string;
-  contractType?: string; // 'SELF_SERVICE' | 'WE_CONVERT_FOR_YOU' | 'HYBRID'
+  contractType?: string; // 'SELF_SERVICE' | 'WE_CONVERT_FOR_YOU'
+  serviceMode?: string;  // 'SELF_SERVICE' | 'WE_CONVERT_FOR_YOU'
   status?: ContractStatus;
+  contractStatus?: ContractStatus;
   roles?: string[];
   permissions?: string[];
   isSuspended?: boolean;
@@ -46,11 +48,25 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 const STORAGE_KEY = 'alsm_active_workspace';
 
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [activeContract, setActiveContract] = useState<EnterpriseContract | null>(null);
   const [contractContext, setContractContext] = useState<AuthoritativeContractContext | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const userEmail = user?.email;
+  const [lastUserEmail, setLastUserEmail] = useState<string | undefined>(userEmail);
+
+  // Clear cache when user switches
+  useEffect(() => {
+    if (userEmail && lastUserEmail && userEmail !== lastUserEmail) {
+      localStorage.removeItem(STORAGE_KEY);
+      contractsApi.clearCache();
+      setActiveContract(null);
+      setContractContext(null);
+    }
+    setLastUserEmail(userEmail);
+  }, [userEmail, lastUserEmail]);
 
   // Initialize workspace from localStorage or default to SELF_SERVICE
   const [activeWorkspace, setActiveWorkspaceState] = useState<ActiveWorkspace>(() => {
@@ -89,16 +105,16 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       // 3. Resolve Service Mode from authoritative context or fallback contract (Strictly 2 Types: Platform-Based vs Managed)
       let resolvedMode: ServiceMode = 'SELF_SERVICE';
-      if (authoritativeContext?.contractType) {
-        const rawType = authoritativeContext.contractType.toUpperCase();
-        if (rawType.includes('CONVERT') || rawType.includes('MANAGED')) {
+      const rawAuthoritative = (authoritativeContext?.serviceMode || authoritativeContext?.contractType || '').toUpperCase();
+      if (rawAuthoritative) {
+        if (rawAuthoritative.includes('CONVERT') || rawAuthoritative.includes('MANAGED')) {
           resolvedMode = 'WE_CONVERT_FOR_YOU';
         } else {
           resolvedMode = 'SELF_SERVICE';
         }
       } else if (list && list.length > 0) {
         const primary = list[0];
-        const rawType = (primary.contractType || primary.serviceMode || '').toUpperCase();
+        const rawType = (primary.serviceMode || primary.contractType || '').toUpperCase();
         if (rawType.includes('MANAGED') || rawType.includes('CONVERT')) {
           resolvedMode = 'WE_CONVERT_FOR_YOU';
         } else {
@@ -126,22 +142,23 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [fetchContract]);
 
   const serviceMode: ServiceMode = useMemo(() => {
-    if (contractContext?.contractType) {
-      const raw = contractContext.contractType.toUpperCase();
-      if (raw.includes('CONVERT') || raw.includes('MANAGED')) return 'WE_CONVERT_FOR_YOU';
+    const rawContext = (contractContext?.serviceMode || contractContext?.contractType || '').toUpperCase();
+    if (rawContext) {
+      if (rawContext.includes('CONVERT') || rawContext.includes('MANAGED')) return 'WE_CONVERT_FOR_YOU';
       return 'SELF_SERVICE';
     }
-    if (activeContract?.contractType) {
-      const raw = (activeContract.contractType || '').toUpperCase();
-      if (raw.includes('CONVERT') || raw.includes('MANAGED')) return 'WE_CONVERT_FOR_YOU';
+    const rawContract = (activeContract?.serviceMode || activeContract?.contractType || '').toUpperCase();
+    if (rawContract) {
+      if (rawContract.includes('CONVERT') || rawContract.includes('MANAGED')) return 'WE_CONVERT_FOR_YOU';
       return 'SELF_SERVICE';
     }
-    const rawMode = (activeContract?.serviceMode || '').toUpperCase();
-    if (rawMode.includes('CONVERT') || rawMode.includes('MANAGED')) return 'WE_CONVERT_FOR_YOU';
-    return 'SELF_SERVICE';
-  }, [contractContext, activeContract]);
+    return activeWorkspace === 'MANAGED' ? 'WE_CONVERT_FOR_YOU' : 'SELF_SERVICE';
+  }, [contractContext, activeContract, activeWorkspace]);
 
   const contractStatus: ContractStatus = useMemo(() => {
+    if (contractContext?.contractStatus) {
+      return contractContext.contractStatus;
+    }
     if (contractContext?.status) {
       return contractContext.status;
     }

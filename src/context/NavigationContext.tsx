@@ -161,7 +161,8 @@ export const STATIC_ACCOUNT_SETTINGS: MenuItem[] = [
  */
 export function mergeDynamicAndStaticNavigation(
   dynamicItems: MenuItem[],
-  defaultNav: MenuItem[] = DEFAULT_SIDEBAR_NAV
+  defaultNav: MenuItem[] = DEFAULT_SIDEBAR_NAV,
+  workspaceMode: 'SELF_SERVICE' | 'MANAGED' = 'SELF_SERVICE'
 ): MenuItem[] {
   if (!Array.isArray(dynamicItems) || dynamicItems.length === 0) {
     const fallback = [...defaultNav];
@@ -248,49 +249,51 @@ export function mergeDynamicAndStaticNavigation(
     }
   }
 
-  // 4. Ensure static Service & Contract items are present if missing from dynamic backend items
-  const hasDynamicService = dynamicItems.some(
-    (item) =>
-      item.category === 'SERVICE' ||
-      item.category === 'SERVICE & CONTRACT' ||
-      item.category === 'CONTRACT & BILLING' ||
-      item.id === 'web3_group_contract_billing' ||
-      item.path === '/billing/contracts' ||
-      item.path === '/billing/usage' ||
-      (item.children &&
-        item.children.some(
-          (c) =>
-            c.category === 'CONTRACT & BILLING' ||
-            c.path === '/billing/contracts' ||
-            c.path === '/billing/usage',
-        )),
-  );
+  // 4. Ensure static Service & Contract items are present if missing from dynamic backend items (Platform-Based Only)
+  if (workspaceMode !== 'MANAGED') {
+    const hasDynamicService = dynamicItems.some(
+      (item) =>
+        item.category === 'SERVICE' ||
+        item.category === 'SERVICE & CONTRACT' ||
+        item.category === 'CONTRACT & BILLING' ||
+        item.id === 'web3_group_contract_billing' ||
+        item.path === '/billing/contracts' ||
+        item.path === '/billing/usage' ||
+        (item.children &&
+          item.children.some(
+            (c) =>
+              c.category === 'CONTRACT & BILLING' ||
+              c.path === '/billing/contracts' ||
+              c.path === '/billing/usage',
+          )),
+    );
 
-  if (!hasDynamicService) {
-    for (const serviceItem of STATIC_SERVICE_ITEMS) {
-      const hasMatch =
-        dynamicIds.has(serviceItem.id.toLowerCase()) ||
-        (serviceItem.path && dynamicPaths.has(serviceItem.path.toLowerCase()));
-      if (!hasMatch) {
-        merged.push({ ...serviceItem });
+    if (!hasDynamicService) {
+      for (const serviceItem of STATIC_SERVICE_ITEMS) {
+        const hasMatch =
+          dynamicIds.has(serviceItem.id.toLowerCase()) ||
+          (serviceItem.path && dynamicPaths.has(serviceItem.path.toLowerCase()));
+        if (!hasMatch) {
+          merged.push({ ...serviceItem });
+        }
       }
-    }
-  } else {
-    // If dynamic items have service items but contract is missing, ensure contract is always accessible
-    const hasContractRoute =
-      dynamicPaths.has('/billing/contracts') ||
-      dynamicPaths.has('/contracts') ||
-      merged.some(
-        (m) =>
-          m.path === '/billing/contracts' ||
-          m.path === '/contracts' ||
-          (m.children && m.children.some((c) => c.path === '/billing/contracts' || c.path === '/contracts')),
-      );
+    } else {
+      // If dynamic items have service items but contract is missing, ensure contract is always accessible
+      const hasContractRoute =
+        dynamicPaths.has('/billing/contracts') ||
+        dynamicPaths.has('/contracts') ||
+        merged.some(
+          (m) =>
+            m.path === '/billing/contracts' ||
+            m.path === '/contracts' ||
+            (m.children && m.children.some((c) => c.path === '/billing/contracts' || c.path === '/contracts')),
+        );
 
-    if (!hasContractRoute) {
-      const contractItem = STATIC_SERVICE_ITEMS.find((s) => s.id === 'contract-subscription');
-      if (contractItem) {
-        merged.push({ ...contractItem });
+      if (!hasContractRoute) {
+        const contractItem = STATIC_SERVICE_ITEMS.find((s) => s.id === 'contract-subscription');
+        if (contractItem) {
+          merged.push({ ...contractItem });
+        }
       }
     }
   }
@@ -409,7 +412,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { data: backendNavNodes, isLoading, refetch } = useNavigationQuery('WEB_3', contractType, isAuth);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [sidebarNav, setSidebarNav] = useState<MenuItem[]>(() =>
-    mergeDynamicAndStaticNavigation(DEFAULT_SIDEBAR_NAV, currentDefaultNav)
+    mergeDynamicAndStaticNavigation(DEFAULT_SIDEBAR_NAV, currentDefaultNav, activeWorkspace)
   );
   const [selectedItemId, setSelectedItemId] = useState<string | null>('dashboard');
   const [isDirty, setIsDirty] = useState<boolean>(false);
@@ -418,12 +421,12 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!isDirty) {
       if (backendNavNodes && Array.isArray(backendNavNodes) && backendNavNodes.length > 0) {
         const mapped = backendNavNodes.map((n) => mapBackendNodeToMenuItem(n));
-        setSidebarNav(mergeDynamicAndStaticNavigation(mapped, currentDefaultNav));
+        setSidebarNav(mergeDynamicAndStaticNavigation(mapped, currentDefaultNav, activeWorkspace));
       } else {
-        setSidebarNav(mergeDynamicAndStaticNavigation([], currentDefaultNav));
+        setSidebarNav(mergeDynamicAndStaticNavigation([], currentDefaultNav, activeWorkspace));
       }
     }
-  }, [backendNavNodes, isDirty, currentDefaultNav]);
+  }, [backendNavNodes, isDirty, currentDefaultNav, activeWorkspace]);
 
   const handleRefresh = useCallback(async () => {
     await refetch();
