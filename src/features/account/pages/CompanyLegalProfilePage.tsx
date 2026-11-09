@@ -10,7 +10,7 @@ import {
   FileCheck,
   Building,
 } from 'lucide-react';
-import { useAuth } from '@/app/providers';
+import { useOptionalAuth } from '@/app/providers';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 import {
@@ -20,16 +20,9 @@ import {
 
 const VIETNAM_TAX_REGEX = /^[0-9]{10}(-[0-9]{3})?$/;
 
-function useSafeAuth() {
-  try {
-    return useAuth();
-  } catch {
-    return { user: null };
-  }
-}
-
 export const CompanyLegalProfilePage: React.FC = () => {
-  const { user } = useSafeAuth();
+  const auth = useOptionalAuth();
+  const user = auth?.user;
   const orgId = (user as any)?.organizationId || 'current';
 
   // Form states

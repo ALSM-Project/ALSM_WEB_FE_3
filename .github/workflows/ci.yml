@@ -1,8 +1,10 @@
-name: Frontend CI Pipeline
+name: Frontend CI/CD Pipeline
 
 on:
   push:
     branches:
+      - main
+      - master
       - develop
       - 'feature/**'
       - 'fix/**'
@@ -10,6 +12,8 @@ on:
       - 'refactor/**'
   pull_request:
     branches:
+      - main
+      - master
       - develop
 
 permissions:
@@ -43,5 +47,13 @@ jobs:
       - name: Run Automated Tests
         run: npm run test
 
-      - name: Build Frontend
+      - name: Build Frontend Application
         run: npm run build
+
+      - name: Upload Production Artifact
+        if: success() && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: actions/upload-artifact@v4
+        with:
+          name: alsm-web-fe-3-dist
+          path: dist/
+          retention-days: 14

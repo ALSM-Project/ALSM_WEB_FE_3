@@ -10,7 +10,7 @@ import {
 } from '@/features/menus/utils/navigationTreeUtils';
 import { apiClient } from '@/services/api/apiClient';
 import { tokenStore } from '@/services/api/tokenStore';
-import { useWorkspace } from './WorkspaceContext';
+import { useOptionalWorkspace } from './WorkspaceContext';
 import { useNavigationQuery, type BackendNavItem } from '@/features/navigation/hooks/useNavigationQuery';
 
 export type { BackendNavItem };
@@ -393,13 +393,8 @@ function mapBackendNodeToMenuItem(node: BackendNavItem, parentCategory?: string)
 }
 
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  let activeWorkspace: 'MANAGED' | 'SELF_SERVICE' = 'SELF_SERVICE';
-  try {
-    const ws = useWorkspace();
-    activeWorkspace = ws?.activeWorkspace === 'MANAGED' ? 'MANAGED' : 'SELF_SERVICE';
-  } catch {
-    // Graceful fallback when rendered outside WorkspaceProvider
-  }
+  const ws = useOptionalWorkspace();
+  const activeWorkspace: 'MANAGED' | 'SELF_SERVICE' = ws?.activeWorkspace === 'MANAGED' ? 'MANAGED' : 'SELF_SERVICE';
 
   const currentDefaultNav = useMemo(() => {
     return getSidebarNavForMode(activeWorkspace);

@@ -213,6 +213,10 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   );
 };
 
+export const useOptionalWorkspace = (): WorkspaceContextType | undefined => {
+  return useContext(WorkspaceContext);
+};
+
 export const useWorkspace = (): WorkspaceContextType => {
   const context = useContext(WorkspaceContext);
   if (!context) {

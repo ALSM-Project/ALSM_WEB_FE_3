@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useUsageStats } from '../queries/useUsageStats';
 import { ROUTES } from '@/shared/constants/routes';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useOptionalWorkspace } from '@/context/WorkspaceContext';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -157,6 +157,8 @@ const MonthlyChart: React.FC<MonthlyChartProps> = ({ data }) => {
 export const UsageStatsPage: React.FC = () => {
   const navigate = useNavigate();
   const { data, isLoading, isError, refetch, isFetching } = useUsageStats();
+  const optionalWs = useOptionalWorkspace();
+  const activeContract = optionalWs?.activeContract ?? null;
 
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -201,14 +203,7 @@ export const UsageStatsPage: React.FC = () => {
     );
   }
 
-  // Check if workspace context has active contract
-  let activeContract: any = null;
-  try {
-    const ws = useWorkspace();
-    activeContract = ws?.activeContract;
-  } catch {
-    // Optional workspace context in isolated tests
-  }
+
 
   const isContractPlan = Boolean(
     data.plan?.isContractPlan ||

@@ -117,6 +117,12 @@ export const ManagedProjectDetailPage: React.FC = () => {
     }
   };
 
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setScreenPage(1);
+  }, [searchScreen, statusFilter]);
+
   if (loading) {
     return (
       <div className="w-full space-y-6 min-w-0 animate-pulse">
@@ -169,10 +175,6 @@ export const ManagedProjectDetailPage: React.FC = () => {
   const convertedScreens = screens.filter((s) => s.status === 'Completed').length;
   const reviewRequired = screens.filter((s) => s.status === 'Review Required').length;
   const pendingScreens = totalScreens - convertedScreens - reviewRequired;
-
-  useEffect(() => {
-    setScreenPage(1);
-  }, [searchScreen, statusFilter]);
 
   const filteredScreens = screens.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(searchScreen.toLowerCase());

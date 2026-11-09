@@ -4,17 +4,19 @@ import { MemoryRouter } from 'react-router-dom';
 import { CompanyLegalProfilePage } from './CompanyLegalProfilePage';
 import { companyLegalProfileService } from '../services/companyLegalProfile.service';
 
-vi.mock('@/app/providers', () => ({
-  useAuth: () => ({
-    user: {
-      id: 'usr_123',
-      fullName: 'Le Van Minh',
-      email: 'minh.le@enterprise.com',
-      organizationId: 'org_889900',
-      organizationName: 'Enterprise Core JSC',
-    },
-  }),
-}));
+vi.mock('@/app/providers', () => {
+  const user = {
+    id: 'usr_123',
+    fullName: 'Le Van Minh',
+    email: 'minh.le@enterprise.com',
+    organizationId: 'org_889900',
+    organizationName: 'Enterprise Core JSC',
+  };
+  return {
+    useAuth: () => ({ user }),
+    useOptionalAuth: () => ({ user }),
+  };
+});
 
 vi.mock('../services/companyLegalProfile.service', () => ({
   companyLegalProfileService: {
