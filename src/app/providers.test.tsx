@@ -101,7 +101,8 @@ const authenticatedUser: User = {
   id: 'user-1',
   fullName: 'Alex Vance',
   email: 'alex@example.com',
-  role: 'USER',
+  role: 'PARTNER',
+  hasWeb3Access: true,
 };
 
 describe('AppProviders authentication bootstrap', () => {

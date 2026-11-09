@@ -1,7 +1,7 @@
 import { Lock } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/app/providers';
+import { useAuth, getTargetHandoffUrl, redirectUserToPortal } from '@/app/providers';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { tokenStore } from '@/services/api/tokenStore';
 import { ChangePasswordPage } from '@/features/account/pages/ChangePasswordPage';
@@ -25,6 +25,13 @@ export const ProtectedRoute: React.FC = () => {
     return <Navigate to={ROUTES.PUBLIC.LOGIN} state={{ returnTo }} replace />;
   }
 
+  // Cross-portal redirect if user belongs elsewhere (Web 1 or Web 2):
+  const targetHandoff = getTargetHandoffUrl(user);
+  if (targetHandoff) {
+    redirectUserToPortal(targetHandoff);
+    return <RouteLoading />;
+  }
+
   if (user?.mustChangePassword) {
     if (location.pathname !== '/account/security/password') return <Navigate to="/account/security/password" replace />;
     return <ChangePasswordPage />;
@@ -41,6 +48,11 @@ export const GuestRoute: React.FC = () => {
   }
 
   if (isAuthenticated) {
+    const targetHandoff = getTargetHandoffUrl(user);
+    if (targetHandoff) {
+      redirectUserToPortal(targetHandoff);
+      return <RouteLoading />;
+    }
     if (user?.mustChangePassword) return <Navigate to="/account/security/password" replace />;
     return <Navigate to={ROUTES.DASHBOARD} replace />;
   }

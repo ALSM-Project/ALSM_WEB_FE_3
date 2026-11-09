@@ -9,7 +9,11 @@ const auth = vi.hoisted(() => ({
   isAuthenticated: true,
   isLoading: false,
 }));
-vi.mock("./providers", () => ({ useAuth: () => auth }));
+vi.mock("./providers", () => ({
+  useAuth: () => auth,
+  getTargetHandoffUrl: () => null,
+  redirectUserToPortal: vi.fn(),
+}));
 vi.mock("@/features/account/pages/ChangePasswordPage", () => ({
   ChangePasswordPage: () => <h1>Restricted password form</h1>,
 }));
