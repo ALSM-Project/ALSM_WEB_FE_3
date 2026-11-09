@@ -1,0 +1,426 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Download, RefreshCw, Sliders, FileCode, Files, Eye, RotateCw, History } from 'lucide-react';
+import { conversionService } from '../services/conversion.service';
+import type { ConversionJob } from '../services/conversion.service';
+import type { MethodMappingEntry } from '../types/conversion';
+import { useConversionJob } from '../queries/useConversionJob';
+import { useConversionJobById } from '../queries/useConversionJobById';
+import { useConversionResult } from '../queries/useConversionResult';
+import { useRetryConversionJob } from '../queries/useRetryConversionJob';
+import type { LegacyScreen } from '@/features/screens/types/screen';
+import { ROUTES } from '@/shared/constants/routes';
+import { CodeViewer } from '../components/CodeViewer';
+import { Button } from '@/shared/ui/Button';
+import { StatusBadge } from '@/shared/ui/Badge';
+import { ModernizationWorkflow } from '@/shared/ui/ModernizationWorkflow';
+import { generateScreenBundle, isDisplayableCodeFile } from '../utils/screenGenerator';
+
+const JOB_STATUS_LABELS: Record<ConversionJob['status'], string> = {
+  QUEUED: 'Queued',
+  PROCESSING: 'Processing',
+  COMPLETED: 'Completed',
+  FAILED: 'Failed',
+  DEAD: 'Failed',
+  CANCELLED: 'Failed',
+};
+
+/** Guesses a source-appropriate fallback filename before a real result exists —
+ * COBOL programs produce .java, BMS/DSPF screens produce .tsx. */
+function fallbackResultFilename(screenName: string): string {
+  return /\.(cob|cbl)$/i.test(screenName)
+    ? screenName.replace(/\.(cob|cbl)$/i, '.java')
+    : screenName.replace(/\.(bms|dspf)$/i, '.tsx');
+}
+
+export const ResultInspectionPage: React.FC = () => {
+  const { projectId = 'proj-acme', screenId = 'scr-login' } = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // UC-19: viewing a specific historical version from the Version History page passes
+  // ?jobId=; without it, this page keeps behaving exactly as before (the screen's latest job).
+  const viewingJobId = searchParams.get('jobId') ?? undefined;
+  const [validating, setValidating] = useState(false);
+  const [screen, setScreen] = useState<LegacyScreen | null>(null);
+  const [selectedFileIndex, setSelectedFileIndex] = useState(0);
+  const [activeViewTab, setActiveViewTab] = useState<'code' | 'mapping'>('code');
+  const [methodMappings, setMethodMappings] = useState<MethodMappingEntry[]>([]);
+  const [loadingMappings, setLoadingMappings] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    conversionService.getScreenById(screenId).then((screenData) => {
+      if (cancelled) return;
+      setScreen(screenData);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [screenId]);
+
+  const latestJobQuery = useConversionJob(projectId, screenId);
+  const specificJobQuery = useConversionJobById(viewingJobId);
+  const job = viewingJobId ? specificJobQuery.data : latestJobQuery.data;
+  const hasRealResult = Boolean(job?.status === 'COMPLETED' && job.resultReference);
+  const { data: resultBundle } = useConversionResult(job?.id, hasRealResult);
+  const retryJob = useRetryConversionJob(projectId, screenId);
+  const isRetryable = job?.status === 'FAILED' || job?.status === 'DEAD';
+
+  const screenName = screen?.name ?? screenId;
+  const isCobolProgram = Boolean(
+    screen?.sourceType === 'COBOL' ||
+    screen?.sourceType === 'RPG' ||
+    /\.(cob|cbl|cpy)$/i.test(screenName) ||
+    (resultBundle?.files && resultBundle.files.some((f) => f.relativePath.endsWith('.java')))
+  );
+
+  useEffect(() => {
+    if (isCobolProgram) {
+      let cancelled = false;
+      setLoadingMappings(true);
+      if (typeof conversionService.getMethodMapping === 'function') {
+        conversionService.getMethodMapping(projectId, screenId)
+          .then((view) => {
+            if (!cancelled && view?.entries) setMethodMappings(view.entries);
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (!cancelled) setLoadingMappings(false);
+          });
+      } else {
+        setLoadingMappings(false);
+      }
+      return () => { cancelled = true; };
+    }
+  }, [projectId, screenId, isCobolProgram]);
+  const screenBundle = useMemo(() => generateScreenBundle(screenName), [screenName]);
+  const files = useMemo(() => {
+    if (resultBundle?.files && resultBundle.files.length > 0) {
+      return resultBundle.files.filter((f) => isDisplayableCodeFile(f.relativePath));
+    }
+    return screenBundle.files;
+  }, [resultBundle, screenBundle]);
+  const selectedFile = files[selectedFileIndex] ?? files[0] ?? null;
+
+  const executionDuration = useMemo(() => {
+    if (!job?.startedAt || !job?.completedAt) return null;
+    const ms = new Date(job.completedAt).getTime() - new Date(job.startedAt).getTime();
+    return `${(ms / 1000).toFixed(1)}s`;
+  }, [job]);
+
+  const generatedLoc = useMemo(
+    () => (files.length ? files.reduce((sum, f) => sum + f.content.split('\n').length, 0) : screenBundle.linesOfCode),
+    [files, screenBundle],
+  );
+
+  const handleReRunValidator = () => {
+    setValidating(true);
+    setTimeout(() => setValidating(false), 800);
+  };
+
+  return (
+    <div className="space-y-6">
+
+      {/* Modernization Workflow Step Bar */}
+      <ModernizationWorkflow
+        currentStep="result"
+        completedSteps={['upload', 'conversion']}
+        onStepClick={(stepId) => {
+          if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+          if (stepId === 'conversion') navigate(ROUTES.PROJECTS.CONVERT(projectId, screenId));
+          if (stepId === 'validation') navigate(ROUTES.PROJECTS.REVIEW(projectId, screenId));
+          if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+        }}
+      />
+
+      <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+        <div>
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold text-slate-900 font-mono">{screenName}</h1>
+            {job ? (
+              <StatusBadge status={JOB_STATUS_LABELS[job.status]} />
+            ) : (
+              <StatusBadge status="Queued" />
+            )}
+          </div>
+          <p className="text-xs text-slate-500 mt-1">Inspecting generated source code and output files.</p>
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            onClick={() => navigate(ROUTES.PROJECTS.HISTORY(projectId, screenId))}
+            className="space-x-1.5 text-xs font-semibold"
+          >
+            <History className="w-4 h-4" />
+            <span>Version History</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate(ROUTES.PROJECTS.PREVIEW(projectId, screenId))}
+            className="space-x-1.5 text-xs font-bold border-brand-300 text-brand-700 bg-brand-50 hover:bg-brand-100"
+          >
+            <Eye className="w-4 h-4 text-brand-600" />
+            <span>Open UI Screen Preview</span>
+          </Button>
+          <Button onClick={() => navigate(ROUTES.PROJECTS.EXPORT(projectId))} disabled={!hasRealResult} className="space-x-1.5 text-xs font-semibold">
+            <Download className="w-4 h-4" />
+            <span>Download</span>
+          </Button>
+        </div>
+      </div>
+
+      {viewingJobId && (
+        <div className="bg-[#E8F1FF] border border-[#B3D4FF] p-3 rounded-xl text-[#0652CC] text-xs font-medium flex items-center justify-between">
+          <span>Viewing a past version from {job ? new Date(job.createdAt).toLocaleString() : '…'}.</span>
+          <Link to={ROUTES.PROJECTS.RESULT(projectId, screenId)} className="font-semibold hover:underline">
+            View latest instead
+          </Link>
+        </div>
+      )}
+
+      {!hasRealResult && (
+        <div className="bg-[#FFFAEB] border border-[#FEDF89] p-4 rounded-xl text-[#DC6803] text-xs font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <span>
+            {job
+              ? isRetryable
+                ? `This screen's conversion job failed${job.errorCode ? ` (${job.errorCode})` : ''}: ${job.errorMessage ?? 'see Review Findings for details.'}`
+                : `This screen's conversion job is currently "${JOB_STATUS_LABELS[job.status]}" — code will appear here once it completes.`
+              : 'No conversion job has been run for this screen yet.'}
+          </span>
+          {isRetryable && job && (
+            <Button
+              variant="outline"
+              onClick={() => retryJob.mutate(job.id)}
+              isLoading={retryJob.isPending}
+              className="space-x-1.5 text-xs font-bold border-[#FEDF89] text-[#DC6803] bg-white hover:bg-amber-50 flex-shrink-0"
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+              <span>Retry Job</span>
+            </Button>
+          )}
+        </div>
+      )}
+      {retryJob.isError && (
+        <div className="bg-rose-50 border border-rose-200 p-3 rounded-xl text-rose-700 text-xs font-medium">
+          Failed to retry this job: {retryJob.error instanceof Error ? retryJob.error.message : 'unknown error'}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-center text-xs">
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-slate-500 text-[11px] font-semibold uppercase">{isCobolProgram ? 'PROGRAM NAME' : 'SCREEN NAME'}</p>
+          <p className="font-bold text-slate-900 font-mono truncate mt-0.5">{screenName}</p>
+        </div>
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-slate-500 text-[11px] font-semibold uppercase">TIMESTAMP</p>
+          <p className="font-bold text-slate-700 mt-0.5">{job ? new Date(job.createdAt).toLocaleString() : '—'}</p>
+        </div>
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-slate-500 text-[11px] font-semibold uppercase">EXECUTION</p>
+          <p className="font-bold text-[#079455] mt-0.5">{executionDuration ?? '—'}</p>
+        </div>
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-slate-500 text-[11px] font-semibold uppercase">FILES GENERATED</p>
+          <p className="font-bold text-brand-600 mt-0.5">{hasRealResult ? files.length : '—'}</p>
+        </div>
+        <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-slate-500 text-[11px] font-semibold uppercase">GENERATED LOC</p>
+          <p className="font-bold text-brand-600 mt-0.5">{generatedLoc ?? '—'} lines</p>
+        </div>
+      </div>
+
+            {isCobolProgram && (
+        <div className="flex border-b border-slate-200 space-x-6 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setActiveViewTab('code')}
+            className={`pb-3 border-b-2 flex items-center space-x-2 transition-colors ${
+              activeViewTab === 'code'
+                ? 'border-[#0652CC] text-[#0652CC]'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <FileCode className="w-4 h-4" />
+            <span>Java Source Code ({files.length} files)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveViewTab('mapping')}
+            className={`pb-3 border-b-2 flex items-center space-x-2 transition-colors ${
+              activeViewTab === 'mapping'
+                ? 'border-[#0652CC] text-[#0652CC]'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Sliders className="w-4 h-4" />
+            <span>Method &amp; Paragraph Mapping ({methodMappings.length} symbols)</span>
+          </button>
+        </div>
+      )}
+
+      {activeViewTab === 'mapping' && isCobolProgram ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">COBOL Paragraph to Java Method Mapping</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Deterministic transformation mapping PROCEDURE DIVISION paragraphs into Spring Boot service methods.
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate(ROUTES.PROJECTS.METHOD_MAPPING(projectId, screenId))}
+              className="bg-[#0652CC] hover:bg-[#0655FF] text-white text-xs font-semibold space-x-1.5"
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Customize in Studio</span>
+            </Button>
+          </div>
+          {loadingMappings ? (
+            <div className="py-12 text-center text-xs text-slate-500">Loading method mappings...</div>
+          ) : methodMappings.length === 0 ? (
+            <div className="py-12 text-center text-xs text-slate-500">
+              No custom method mappings detected for this program. Default convention mapping is active.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
+                    <th className="py-2.5 px-3">Type</th>
+                    <th className="py-2.5 px-3">Original COBOL Paragraph</th>
+                    <th className="py-2.5 px-3">Target Java Identifier</th>
+                    <th className="py-2.5 px-3">Target File Path</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {methodMappings.map((m, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50">
+                      <td className="py-2 px-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                          m.kind === 'CLASS' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                        }`}>
+                          {m.kind}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 font-semibold text-slate-800">{m.originalName}</td>
+                      <td className="py-2 px-3 text-[#0652CC] font-bold">{m.targetName}</td>
+                      <td className="py-2 px-3 text-slate-500 text-[11px] truncate max-w-xs">{m.relativePath}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-3">
+          <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+            <span className="flex items-center space-x-1.5">
+              <FileCode className="w-4 h-4 text-brand-600" />
+              <span>Generated Code</span>
+            </span>
+          </div>
+          {files.length > 1 && (
+            <div className="flex flex-wrap gap-2">
+              {files.map((file, index) => (
+                <button
+                  key={file.relativePath}
+                  onClick={() => setSelectedFileIndex(index)}
+                  className={`text-xs font-mono px-2.5 py-1 rounded-lg border ${
+                    index === selectedFileIndex
+                      ? 'bg-brand-50 border-brand-300 text-brand-700 font-semibold'
+                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {file.relativePath}
+                </button>
+              ))}
+            </div>
+          )}
+          <CodeViewer
+            code={selectedFile?.content ?? ''}
+            filename={selectedFile?.relativePath ?? fallbackResultFilename(screenName)}
+          />
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+            <span className="flex items-center space-x-1.5">
+              <Files className="w-4 h-4 text-brand-600" />
+              <span>Generated Files</span>
+            </span>
+          </div>
+          {files.length === 0 ? (
+            <div className="bg-white border border-slate-200 rounded-xl p-6 text-center text-xs text-slate-500">
+              No generated files yet — this appears once the conversion job completes.
+            </div>
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-xl divide-y divide-slate-100 overflow-hidden">
+              {files.map((file, index) => (
+                <button
+                  key={file.relativePath}
+                  onClick={() => setSelectedFileIndex(index)}
+                  className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-left text-xs transition-colors ${
+                    index === selectedFileIndex ? 'bg-brand-50' : 'hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="flex items-center space-x-2 min-w-0">
+                    <FileCode className="w-3.5 h-3.5 text-brand-600 flex-shrink-0" />
+                    <span className={`font-mono truncate ${index === selectedFileIndex ? 'text-brand-700 font-semibold' : 'text-slate-700'}`}>
+                      {file.relativePath}
+                    </span>
+                  </span>
+                  <span className="text-slate-400 flex-shrink-0">{file.content.split('\n').length} lines</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-100">
+        <Button variant="outline" onClick={handleReRunValidator} isLoading={validating} className="space-x-1.5 text-xs font-semibold">
+          <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
+          <span>Re-run Validation Engine</span>
+        </Button>
+
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="outline"
+            onClick={() => navigate(ROUTES.PROJECTS.PREVIEW(projectId, screenId))}
+            className="space-x-1.5 text-xs font-bold border-brand-300 text-brand-700 bg-brand-50 hover:bg-brand-100"
+          >
+            <Eye className="w-3.5 h-3.5 text-brand-600" />
+            <span>Open UI Screen Preview</span>
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              navigate(
+                screen?.sourceType === 'COBOL'
+                  ? ROUTES.PROJECTS.METHOD_MAPPING(projectId, screenId)
+                  : ROUTES.PROJECTS.MAPPING(projectId, screenId),
+              )
+            }
+            className="space-x-1.5 text-xs font-semibold"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>{screen?.sourceType === 'COBOL' ? 'Edit Method Mapping' : 'Edit Field Mapping'}</span>
+          </Button>
+          <Button
+            onClick={() => navigate(ROUTES.PROJECTS.QUALITY_REVIEW(projectId, screenId))}
+            className="space-x-1.5 text-xs font-bold bg-[#0652CC] hover:bg-[#0655FF] text-white"
+          >
+            <span>Review Initial Quality &rarr;</span>
+          </Button>
+        </div>
+      </div>
+        </>
+      )}
+    </div>
+  );
+};
+export default ResultInspectionPage;

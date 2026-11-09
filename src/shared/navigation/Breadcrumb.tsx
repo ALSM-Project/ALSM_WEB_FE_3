@@ -1,0 +1,63 @@
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ChevronRight } from 'lucide-react';
+import { useNavigation } from '@/hooks/useNavigation';
+import { getBreadcrumbsFromRoute } from './breadcrumbUtils';
+import type { BreadcrumbNode } from './breadcrumbUtils';
+
+export interface BreadcrumbProps {
+  items?: BreadcrumbNode[];
+  customItems?: BreadcrumbNode[];
+  className?: string;
+}
+
+export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items: propItems, customItems, className = '' }) => {
+  const location = useLocation();
+  const { navigation } = useNavigation();
+
+  const menuItems = navigation?.sidebarNav || [];
+  const rawItems = customItems || propItems || getBreadcrumbsFromRoute(location.pathname, menuItems);
+  const items = rawItems.map((item) => ({
+    ...item,
+    path: item.path || item.href,
+  }));
+
+  if (!items || items.length === 0) {
+    return null;
+  }
+
+  return (
+    <nav
+      aria-label="Breadcrumb"
+      className={`flex items-center space-x-1.5 text-xs font-medium text-[#6B778C] overflow-x-auto py-1 ${className}`}
+    >
+      {items.map((item, index) => {
+        const isLast = index === items.length - 1;
+
+        return (
+          <React.Fragment key={`${item.label}-${index}`}>
+            {index > 0 && <ChevronRight className="w-4 h-4 text-[#97A0AF] shrink-0" aria-hidden="true" />}
+            {item.path && !isLast ? (
+              <Link
+                to={item.path}
+                className="hover:text-[#0652CC] text-[#6B778C] font-medium text-xs transition-colors truncate max-w-[200px]"
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span
+                className={`truncate max-w-[240px] text-xs ${
+                  isLast ? 'text-[#091E42] font-semibold' : 'text-[#6B778C] font-medium'
+                }`}
+              >
+                {item.label}
+              </span>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </nav>
+  );
+};
+
+export default Breadcrumb;

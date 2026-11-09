@@ -1,0 +1,12 @@
+export { ModernizationDashboardPage } from './pages/ModernizationDashboardPage';
+export { AdaptiveDashboardPage } from './pages/AdaptiveDashboardPage';
+export { ProjectsListPage } from './pages/ProjectsListPage';
+export { ProjectOverviewPage } from './pages/ProjectOverviewPage';
+export { AdaptiveProjectDetailPage } from './pages/AdaptiveProjectDetailPage';
+export { CreateProjectPage } from './pages/CreateProjectPage';
+export { DeleteProjectPage } from './pages/DeleteProjectPage';
+export { ProjectFilesPage } from './pages/ProjectFilesPage';
+export { CreateProjectModal } from './components/CreateProjectModal';
+export { DeleteProjectModal } from './components/DeleteProjectModal';
+export { projectService } from './services/project.service';
+export type * from './types/project';

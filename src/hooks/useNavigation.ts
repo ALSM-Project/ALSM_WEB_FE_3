@@ -1,0 +1,29 @@
+import { useNavigationContext } from '@/context/NavigationContext';
+
+export function useNavigation() {
+  const ctx = useNavigationContext();
+
+  return {
+    sidebarNav: ctx.sidebarNav,
+    navigation: ctx.navigation,
+    loading: ctx.loading,
+    error: null,
+    selectedItemId: ctx.selectedItemId,
+    setSelectedItemId: ctx.setSelectedItemId,
+    addItem: ctx.addItem,
+    updateItem: ctx.updateItem,
+    deleteItem: ctx.deleteItem,
+    moveItem: ctx.moveItem,
+    reorderSibling: ctx.reorderSibling,
+    duplicateItem: ctx.duplicateItem,
+    resetToDefault: ctx.resetToDefault,
+    saveChanges: ctx.saveChanges,
+    isDirty: ctx.isDirty,
+    trackMenuItemUsage: ctx.trackMenuItemUsage,
+    pinMenuItem: ctx.pinMenuItem,
+    unpinMenuItem: ctx.unpinMenuItem,
+    refreshNavigation: ctx.refreshNavigation,
+  };
+}
+
+export default useNavigation;

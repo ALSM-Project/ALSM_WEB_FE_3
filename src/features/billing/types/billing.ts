@@ -1,0 +1,158 @@
+// Billing Types
+
+export type PlanTier = 'free' | 'starter' | 'pro' | 'enterprise';
+export type BillingCycle = 'monthly' | 'annual';
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  tier: PlanTier;
+  price: number;
+  annualPrice?: number;
+  currency: string;
+  description: string;
+  features: string[];
+  maxScreens: number;
+  maxProjects: number;
+  isPopular?: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  planId: string;
+  planName: string;
+  tier: PlanTier;
+  planTier?: string;
+  status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'ACTIVE' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED' | 'EXPIRED' | 'PENDING_PAYMENT';
+  suspensionReason?: string;
+  billingCycle: BillingCycle;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+}
+
+export interface LegacySubscription {
+  plan: string;
+  status: string;
+  expiresAt?: string;
+}
+
+export interface UsageStatistics {
+  plan: {
+    tier: string;  // 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE'
+    name: string;
+    contractNumber?: string;
+    contractTitle?: string;
+    isContractPlan?: boolean;
+    serviceMode?: string;
+  };
+  screens: {
+    used: number;
+    max: number;   // -1 = unlimited
+  };
+  programs?: {
+    used: number;
+    max: number;
+  };
+  projects: {
+    used: number;
+    max: number;   // -1 = unlimited
+  };
+  storage: {
+    usedGb: number;
+    maxGb: number; // -1 = unlimited
+  };
+  monthlyConversions: Array<{ month: string; count: number }>;
+
+  // Backward compatibility fields
+  screensUsed?: number;
+  screensLimit?: number;
+  projectsUsed?: number;
+  projectsLimit?: number;
+  periodStart?: string;
+  periodEnd?: string;
+}
+
+export interface InvoiceLineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber?: string;
+  date: string;
+  issueDate?: string;
+  dueDate?: string;
+  paidAt?: string | null;
+  amount: number;
+  currency: string;
+  status: 'paid' | 'pending' | 'failed' | 'overdue' | 'PAID' | 'PENDING' | 'OVERDUE' | 'CANCELLED';
+  downloadUrl?: string;
+  organizationId?: string;
+  organizationName?: string;
+  customerId?: string;
+  customerEmail?: string;
+  subtotal?: number;
+  tax?: number;
+  items?: InvoiceLineItem[];
+}
+
+export interface QRDetails {
+  qrCode: string;
+  amount: number;
+  currency: string;
+  expiresAt: string;
+  orderId: string;
+}
+
+export interface QRPaymentOrder {
+  orderId: string;
+  planId: string;
+  billingCycle: BillingCycle;
+}
+
+export interface PaymentStatusResponse {
+  orderId: string;
+  status: 'pending' | 'success' | 'failed';
+  message?: string;
+}
+
+export interface UpgradePreview {
+  currentPlan: string;
+  newPlan: string;
+  proratedAmount: number;
+  currency: string;
+  nextBillingDate: string;
+}
+
+export interface EnterpriseQuoteRequest {
+  fullName: string;
+  companyName: string;
+  email: string;
+  phone?: string;
+  message?: string;
+}
+
+export interface QuoteRequestResponse {
+  id: string;
+  status: 'PENDING' | 'CONTACTED' | 'APPROVED' | 'SUSPENDED' | 'REJECTED' | 'CLOSED';
+  statusReason?: string;
+  appealMessage?: string;
+  appealStatus?: 'PENDING' | 'APPROVED' | 'DECLINED';
+  appealResponse?: string;
+  appealedAt?: string;
+  appealResolvedAt?: string;
+  fullName: string;
+  companyName: string;
+  email: string;
+  phone?: string;
+  message?: string;
+  currentPlanTier: PlanTier | string;
+  createdAt: string;
+}
+
+export type QuoteRequestStatus = QuoteRequestResponse['status'];

@@ -1,0 +1,114 @@
+/* Enterprise Auth Layout Styles - Modern Depth & Balance */
+
+.auth-page-main {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--alsm-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .auth-page-main {
+    padding: 3rem 2rem;
+  }
+}
+
+/* Centered 1040px Container: Perfectly centered horizontally and vertically */
+.auth-centered-container {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+  .auth-centered-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 2rem;
+    align-items: stretch;
+  }
+
+  .auth-centered-container.variant-register {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  }
+}
+
+/* Left Showcase Panel: Subtle Same-Tone Gradient Depth */
+.auth-marketing-card {
+  position: relative;
+  background: linear-gradient(180deg, var(--alsm-panel-bg-top) 0%, var(--alsm-panel-bg-bottom) 100%);
+  color: var(--alsm-panel-text);
+  border-radius: 16px;
+  padding: 2.5rem 2.25rem;
+  box-sizing: border-box;
+  border: 1px solid var(--alsm-panel-border);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Modernization Architecture Pipeline Box */
+.modernization-flow-box {
+  background-color: transparent;
+  border-top: 1px solid var(--alsm-panel-border);
+  padding: 1.25rem 0 0 0;
+  margin-top: 1.5rem;
+}
+
+.flow-node-item {
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--alsm-panel-border);
+}
+
+.flow-node-item:last-child {
+  border-bottom: none;
+}
+
+/* Right Form Card: Pure white, radius 16px, Single clean soft elevation */
+.auth-card-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.auth-card-box {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  background-color: var(--alsm-surface);
+  border: 1px solid var(--alsm-border);
+  border-radius: 16px;
+  padding: 2.5rem 2.25rem;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Input Autofill Override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--alsm-surface) inset !important;
+  -webkit-text-fill-color: var(--alsm-text) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+@media (max-width: 640px) {
+  .auth-marketing-card,
+  .auth-card-box {
+    padding: 1.75rem 1.5rem;
+  }
+}

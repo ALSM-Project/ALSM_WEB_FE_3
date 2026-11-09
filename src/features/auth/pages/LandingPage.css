@@ -1,0 +1,31 @@
+/* ================================================
+   ALSM LandingPage — Enterprise Modernization Platform Styles
+   ================================================ */
+
+/* Code Diff Lines */
+.lx-code-line-old {
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 2px solid #ef4444;
+  padding-left: 8px;
+}
+
+.lx-code-line-new {
+  background: rgba(16, 185, 129, 0.08);
+  border-left: 2px solid #10b981;
+  padding-left: 8px;
+}
+
+/* Restrained Hover Transitions (color only, no layout shifts) */
+.enterprise-card-transition {
+  transition: border-color 0.15s ease;
+}
+
+.enterprise-card-transition:hover {
+  border-color: #2563EB;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enterprise-card-transition {
+    transition: none;
+  }
+}

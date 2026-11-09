@@ -1,0 +1,71 @@
+export const ROUTES = {
+  PUBLIC: {
+    LANDING: '/',
+    FAQ: '/faq',
+    DOCS: '/docs',
+    CONTACT: '/contact',
+    REGISTER: '/register',
+    VERIFY_EMAIL: '/verify-email',
+    LOGIN: '/login',
+    FORGOT_PASSWORD: '/forgot-password',
+    RESET_PASSWORD: '/reset-password',
+  },
+  DASHBOARD: '/dashboard',
+  ACCOUNT: {
+    PROFILE: '/account/profile',
+    PREFERENCES: '/account/preferences',
+    PASSWORD: '/account/security/password',
+    TWO_FACTOR: '/account/security/2fa',
+    SESSIONS: '/account/security/sessions',
+  },
+  PROJECTS: {
+    LIST: '/projects',
+    OVERVIEW: (id = ':projectId') => `/projects/${id}`,
+    NEW: '/projects/new',
+    DELETE: (id = ':projectId') => `/projects/${id}/delete`,
+    UPLOAD: (id = ':projectId') => `/projects/${id}/upload`,
+    SCREENS: (id = ':projectId') => `/projects/${id}/screens`,
+    CONVERT: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/convert`,
+    BULK_CONVERT: (id = ':projectId') => `/projects/${id}/screens/bulk-convert`,
+    RESULT: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/result`,
+    QUALITY_REVIEW: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/quality-review`,
+    HISTORY: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/history`,
+    PREVIEW: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/preview`,
+    MAPPING: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/mapping`,
+    METHOD_MAPPING: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/method-mapping`,
+    REVIEW: (projectId = ':projectId', screenId = ':screenId') => `/projects/${projectId}/screens/${screenId}/review`,
+    EXPORT: (id = ':projectId') => `/projects/${id}/export`,
+    DIAGNOSTICS: (id = ':projectId') => `/projects/${id}/diagnostics`,
+  },
+  BILLING: {
+    USAGE: '/billing/usage',
+    PRICING: '/billing/pricing',
+    SUBSCRIPTION: '/billing/subscription',
+    TRIAL: '/billing/trial',
+    UPGRADE_ENTERPRISE: '/billing/upgrade',
+    INVOICES: '/billing/invoices',
+    CONTRACTS: '/billing/contracts',
+  },
+  MEETINGS: '/meetings',
+  MEETINGS_NEW: '/meetings/new',
+  MEETING_REQUESTS: '/meeting-requests',
+  MEETING_REQUESTS_NEW: '/meeting-requests/new',
+  CONVERSATIONS: '/conversations',
+  COMMUNICATION: {
+    CONVERSATIONS: '/conversations',
+    MEETINGS: '/meetings',
+    MEETINGS_NEW: '/meetings/new',
+    MEETING_REQUESTS: '/meeting-requests',
+    MEETING_REQUESTS_NEW: '/meeting-requests/new',
+  },
+};
+
+export const getCentralAuthUrls = () => {
+  const userPortalUrl = import.meta.env.VITE_USER_PORTAL_URL || 'http://localhost:5173';
+  const callbackUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : 'http://localhost:3003/auth/callback';
+  return {
+    login: `${userPortalUrl}/login?returnTo=${encodeURIComponent(callbackUrl)}`,
+    register: `${userPortalUrl}/register?returnTo=${encodeURIComponent(callbackUrl)}`,
+  };
+};
+

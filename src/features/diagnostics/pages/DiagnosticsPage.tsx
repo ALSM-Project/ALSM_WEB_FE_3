@@ -1,0 +1,472 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Search,
+  Download,
+  ChevronRight,
+  Wrench,
+  Headphones,
+  FileText,
+  Copy,
+  Check,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Filter,
+  X,
+} from 'lucide-react';
+import { diagnosticsService } from '../services/diagnostics.service';
+import type { DiagnosticLog } from '../types/diagnostics';
+import { Button } from '@/shared/ui/Button';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { ModernizationWorkflow } from '@/shared/ui/ModernizationWorkflow';
+import { ROUTES } from '@/shared/constants/routes';
+
+export const DiagnosticsPage: React.FC = () => {
+  const { projectId = 'proj-acme' } = useParams();
+  const navigate = useNavigate();
+  const [logs, setLogs] = useState<DiagnosticLog[]>([]);
+  const [selectedId, setSelectedId] = useState<string>('diag-1');
+  const [severityFilter, setSeverityFilter] = useState('ALL');
+  const [timeFilter, setTimeFilter] = useState('24h');
+  const [search, setSearch] = useState('');
+  const [patching, setPatching] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ type: 'success' | 'info' | 'warning'; message: string } | null>(
+    null
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setLoadError(null);
+    diagnosticsService
+      .getDiagnosticsLogs(projectId)
+      .then((data) => {
+        if (cancelled) return;
+        setLogs(data);
+        if (data.length > 0) {
+          setSelectedId(data[0].id);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load error logs', err);
+        if (!cancelled) setLoadError('Could not load error logs. Please try again.');
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  const selectedLog = logs.find((l) => l.id === selectedId) || logs[0];
+
+  const showNotification = (type: 'success' | 'info' | 'warning', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  const handleApplyPatch = async () => {
+    if (!selectedLog) return;
+    setPatching(true);
+    try {
+      await diagnosticsService.applyDiagnosticPatch(selectedLog.id, projectId);
+      setLogs((prev) => prev.map((l) => (l.id === selectedLog.id ? { ...l, resolved: true } : l)));
+      showNotification('success', `Patch successfully applied for ${selectedLog.screenName} (${selectedLog.errorCode}).`);
+    } catch {
+      showNotification('warning', 'Failed to apply patch. Please try again.');
+    } finally {
+      setPatching(false);
+    }
+  };
+
+  const handleEscalate = async () => {
+    if (!selectedLog) return;
+    await diagnosticsService.escalateToSupport(selectedLog.id);
+    setLogs((prev) => prev.map((l) => (l.id === selectedLog.id ? { ...l, escalated: true } : l)));
+    showNotification('info', `Ticket escalated to ALSM Engineering Support for error ${selectedLog.errorCode}.`);
+  };
+
+  const handleSendManualReview = async () => {
+    if (!selectedLog) return;
+    await diagnosticsService.sendToManualReview(selectedLog.id);
+    setLogs((prev) => prev.map((l) => (l.id === selectedLog.id ? { ...l, manualReview: true } : l)));
+    showNotification('success', `Log sent to Manual Review queue.`);
+  };
+
+  const handleDownloadFullLog = () => {
+    const content = diagnosticsService.downloadFullLog(projectId, logs);
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `diagnostics-full-${projectId}.log`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showNotification('success', 'Full diagnostic log downloaded successfully.');
+  };
+
+  const handleCopyPatch = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const filteredLogs = logs.filter((log) => {
+    const matchesSearch =
+      log.screenName.toLowerCase().includes(search.toLowerCase()) ||
+      log.errorCode.toLowerCase().includes(search.toLowerCase()) ||
+      log.offendingCode.toLowerCase().includes(search.toLowerCase());
+    const matchesSeverity = severityFilter === 'ALL' || log.severity.toUpperCase() === severityFilter.toUpperCase();
+    return matchesSearch && matchesSeverity;
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Standard Reusable PageHeader */}
+      <PageHeader
+        title="Diagnostics & Error Logs"
+        subtitle="Analyze parsing failures, syntax diagnostics, and rule-based validation findings across workspace assets."
+        actions={
+          <Button
+            onClick={handleDownloadFullLog}
+            className="bg-[#0652CC] hover:bg-[#0655FF] text-white space-x-1.5 text-xs font-bold shadow-xs shrink-0 cursor-pointer"
+          >
+            <Download className="w-4 h-4" aria-hidden="true" />
+            <span>Download Full Log</span>
+          </Button>
+        }
+      />
+
+      {/* Modernization Workflow Step Banner */}
+      <ModernizationWorkflow
+        currentStep="convert"
+        completedSteps={['upload']}
+        onStepClick={(stepId) => {
+          if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+          if (stepId === 'mapping') navigate(ROUTES.PROJECTS.MAPPING(projectId, 'scr-acct010'));
+          if (stepId === 'conversion') navigate(ROUTES.PROJECTS.CONVERT(projectId, 'scr-acct010'));
+          if (stepId === 'validation' || stepId === 'review') navigate(ROUTES.PROJECTS.REVIEW(projectId, 'scr-acct010'));
+          if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, 'scr-acct010'));
+          if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+        }}
+      />
+
+      {/* Notification Toast Banner */}
+      {notification && (
+        <div
+          className={`p-4 rounded-xl border flex items-center justify-between transition-colors duration-200 ${
+            notification.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : notification.type === 'info'
+              ? 'bg-blue-50 border-blue-200 text-blue-800'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+        >
+          <div className="flex items-center space-x-2 text-xs font-semibold">
+            {notification.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" aria-hidden="true" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-[#0652CC] flex-shrink-0" aria-hidden="true" />
+            )}
+            <span>{notification.message}</span>
+          </div>
+          <button
+            onClick={() => setNotification(null)}
+            className="text-slate-400 hover:text-slate-600 ml-4 p-1 rounded hover:bg-black/5 cursor-pointer flex items-center justify-center transition-colors"
+            aria-label="Close notification"
+          >
+            <X className="w-4 h-4" aria-hidden="true" />
+          </button>
+        </div>
+      )}
+
+      {/* Filter and Search Toolbar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-[#D9E2EC] shadow-2xs">
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
+          <div className="relative flex items-center">
+            <Filter className="w-4 h-4 absolute left-3 text-[#6B778C] pointer-events-none" aria-hidden="true" />
+            <select
+              aria-label="Filter by Severity"
+              value={severityFilter}
+              onChange={(e) => setSeverityFilter(e.target.value)}
+              className="pl-8 pr-8 py-2 bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0652CC] cursor-pointer"
+            >
+              <option value="ALL">All Severities</option>
+              <option value="FATAL">Fatal</option>
+              <option value="WARNING">Warning</option>
+              <option value="INFO">Info</option>
+            </select>
+          </div>
+
+          <div className="relative flex items-center">
+            <Clock className="w-4 h-4 absolute left-3 text-[#6B778C] pointer-events-none" aria-hidden="true" />
+            <select
+              aria-label="Filter by Time Range"
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value)}
+              className="pl-8 pr-8 py-2 bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] text-xs font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0652CC] cursor-pointer"
+            >
+              <option value="24h">Last 24 Hours</option>
+              <option value="7d">Last 7 Days</option>
+              <option value="all">All Time</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-[#6B778C] pointer-events-none" aria-hidden="true" />
+          <input
+            type="text"
+            placeholder="Search error codes, screens..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 bg-[#F7F9FC] border border-[#D9E2EC] rounded-xl text-xs text-[#091E42] focus:outline-none focus:ring-2 focus:ring-[#0652CC] placeholder-[#6B778C]"
+          />
+        </div>
+      </div>
+
+      {/* Flat Data Table Container */}
+      <div className="bg-white border border-[#D9E2EC] rounded-xl overflow-hidden shadow-2xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-mono">
+            <thead className="text-[#42526E] font-sans font-semibold text-xs border-b border-[#D9E2EC] bg-[#F7F9FC]">
+              <tr>
+                <th className="p-3.5 pl-5">Timestamp</th>
+                <th className="p-3.5">Screen Name</th>
+                <th className="p-3.5">Error Code</th>
+                <th className="p-3.5">Severity</th>
+                <th className="p-3.5">Offending Line</th>
+                <th className="p-3.5 pr-5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E5EAF0]">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-12 px-6 text-center text-[#6B778C] font-sans text-xs">
+                    Loading error logs…
+                  </td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan={6} className="py-12 px-6 text-center text-rose-600 font-sans text-xs font-medium">
+                    {loadError}
+                  </td>
+                </tr>
+              ) : filteredLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 px-6 text-center text-slate-500 font-sans text-xs">
+                    No error logs matching your current filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredLogs.map((log) => {
+                  const isSelected = log.id === selectedId;
+                  return (
+                    <tr
+                      key={log.id}
+                      onClick={() => setSelectedId(log.id)}
+                      className={`cursor-pointer transition-colors group ${
+                        isSelected
+                          ? 'bg-blue-50/80 text-[#091E42] font-semibold'
+                          : 'hover:bg-slate-50/80 text-[#42526E]'
+                      }`}
+                    >
+                      <td className="p-3.5 pl-5 font-sans text-xs text-[#6B778C] whitespace-nowrap">{log.timestamp}</td>
+                      <td className="p-3.5 font-sans text-xs font-bold text-[#091E42] whitespace-nowrap">{log.screenName}</td>
+                      <td className="p-3.5 whitespace-nowrap font-mono text-xs">
+                        <span
+                          className={
+                            log.severity === 'Fatal'
+                              ? 'text-[#091E42] font-bold'
+                              : log.severity === 'Warning'
+                              ? 'text-amber-700 font-semibold'
+                              : 'text-[#0652CC] font-semibold'
+                          }
+                        >
+                          {log.errorCode}
+                        </span>
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                            log.severity === 'Fatal'
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : log.severity === 'Warning'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : 'bg-blue-50 text-[#0652CC] border-blue-200'
+                          }`}
+                        >
+                          {log.severity}
+                        </span>
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap font-mono text-xs text-[#42526E]">
+                        {log.offendingLineDisplay || `Line ${log.lineNumber}`}
+                      </td>
+                      <td className="p-3.5 pr-5 text-right whitespace-nowrap">
+                        <ChevronRight
+                          className={`w-4 h-4 transition-transform ${
+                            isSelected
+                              ? 'text-[#0652CC] translate-x-0.5'
+                              : 'text-slate-300 opacity-0 group-hover:opacity-100'
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Split Details View: Source Code Snippet (Left) & AI Resolution (Right) */}
+      {selectedLog && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card 1: Source Code Snippet */}
+          <div className="bg-white border border-[#D9E2EC] rounded-xl p-5 space-y-4 shadow-2xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between border-b border-[#E5EAF0] pb-3">
+                <span className="text-[#091E42] font-bold text-xs">
+                  Source Code Snippet
+                </span>
+                <span className="font-mono text-xs font-bold text-[#0652CC] bg-[#E8F1FF] px-2.5 py-1 rounded-lg border border-blue-200">
+                  {selectedLog.screenName}
+                </span>
+              </div>
+
+              {/* Code Snippet Viewer */}
+              <div className="mt-4 bg-[#0F172A] rounded-xl p-4 font-mono text-xs text-slate-300 overflow-x-auto">
+                <div className="space-y-1">
+                  {selectedLog.snippet?.map((line) => (
+                    <div
+                      key={line.lineNumber}
+                      className={`flex items-center rounded-sm px-2 py-0.5 transition-colors ${
+                        line.isOffending
+                          ? 'bg-rose-950/80 text-rose-200 ring-1 ring-rose-500/50 font-semibold -mx-2 px-3 py-1'
+                          : 'hover:bg-slate-800/50'
+                      }`}
+                    >
+                      <span className="w-10 text-slate-500 text-right pr-4 select-none font-mono text-xs">
+                        {line.lineNumber}
+                      </span>
+                      <span className="whitespace-pre">{line.code}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: AI-Suggested Resolution */}
+          <div className="bg-white border border-[#D9E2EC] rounded-xl p-5 space-y-4 shadow-2xs flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-[#E5EAF0] pb-3">
+                <span className="text-[#091E42] font-bold text-xs">
+                  AI-Suggested Resolution
+                </span>
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {selectedLog.suggestedPatch.confidence || 'High Confidence Match'}
+                </span>
+              </div>
+
+              <p className="text-xs text-[#42526E] leading-relaxed font-sans font-medium [text-wrap:pretty]">
+                {selectedLog.suggestedPatch.reason}
+              </p>
+
+              {/* Suggested Patch Box */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#6B778C]">
+                    {selectedLog.suggestedPatch.targetFramework || 'Suggested Patch (React)'}
+                  </span>
+                  <button
+                    onClick={() =>
+                      handleCopyPatch(
+                        selectedLog.suggestedPatch.patchSnippet || selectedLog.suggestedPatch.suggestedLine
+                      )
+                    }
+                    className="flex items-center space-x-1.5 text-xs text-[#0652CC] hover:underline font-bold transition-colors cursor-pointer"
+                    aria-label="Copy patch source code"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                        <span className="text-emerald-600">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" aria-hidden="true" />
+                        <span>Copy Patch</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="bg-[#0F172A] rounded-xl p-4 font-mono text-xs text-emerald-400 overflow-x-auto">
+                  <pre className="whitespace-pre-wrap leading-relaxed">
+                    {selectedLog.suggestedPatch.patchSnippet || selectedLog.suggestedPatch.suggestedLine}
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            {/* Resolution Action Buttons inside AI Card */}
+            <div className="flex flex-col sm:flex-row justify-end items-center gap-3 pt-3 border-t border-[#E5EAF0]">
+              <Button
+                variant="primary"
+                onClick={handleApplyPatch}
+                isLoading={patching}
+                disabled={selectedLog.resolved}
+                className="w-full sm:w-auto space-x-1.5 text-xs font-bold bg-[#0652CC] hover:bg-[#0655FF] text-white px-4 py-2 rounded-xl shadow-xs cursor-pointer"
+              >
+                <Wrench className="w-4 h-4" aria-hidden="true" />
+                <span>{selectedLog.resolved ? 'Patch Applied & Retried' : 'Apply Patch & Retry'}</span>
+              </Button>
+
+              <Button
+                variant="secondary"
+                onClick={handleEscalate}
+                disabled={selectedLog.escalated}
+                className="w-full sm:w-auto space-x-1.5 text-xs font-semibold border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 px-4 py-2 rounded-xl cursor-pointer"
+              >
+                <Headphones className="w-4 h-4 text-rose-600" aria-hidden="true" />
+                <span>{selectedLog.escalated ? 'Escalated' : 'Escalate to Support'}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Global Action Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-[#E5EAF0]">
+        <Button
+          variant="secondary"
+          onClick={handleSendManualReview}
+          disabled={selectedLog?.manualReview}
+          className="w-full sm:w-auto space-x-1.5 text-xs font-semibold border-amber-200 text-amber-800 bg-amber-50 hover:bg-amber-100 px-4 py-2 rounded-xl cursor-pointer"
+        >
+          <FileText className="w-4 h-4 text-amber-600" aria-hidden="true" />
+          <span>{selectedLog?.manualReview ? 'Sent to Manual Review' : 'Send to Manual Review'}</span>
+        </Button>
+
+        <Button
+          variant="primary"
+          onClick={handleDownloadFullLog}
+          className="w-full sm:w-auto space-x-1.5 text-xs font-bold bg-[#0652CC] hover:bg-[#0655FF] text-white px-5 py-2 rounded-xl shadow-xs cursor-pointer"
+        >
+          <Download className="w-4 h-4" aria-hidden="true" />
+          <span>Download Log Archive</span>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+export default DiagnosticsPage;
