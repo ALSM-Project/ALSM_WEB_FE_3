@@ -321,7 +321,7 @@ export const UsageStatsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.BILLING.UPGRADE_ENTERPRISE)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#0652CC] text-white text-xs font-bold hover:bg-[#0448b3] transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#244A70] text-white text-xs font-bold hover:bg-[#1B3856] transition-colors shadow-sm"
               >
                 <Zap className="w-4 h-4" />
                 Amend Quota
@@ -332,7 +332,7 @@ export const UsageStatsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate(ROUTES.BILLING.UPGRADE_ENTERPRISE)}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#0652CC] text-white text-xs font-bold hover:bg-[#0448b3] transition-colors shadow-sm"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#244A70] text-white text-xs font-bold hover:bg-[#1B3856] transition-colors shadow-sm"
               >
                 <Zap className="w-4 h-4" />
                 Upgrade Plan
