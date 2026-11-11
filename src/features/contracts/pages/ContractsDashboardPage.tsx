@@ -191,7 +191,7 @@ export const ContractsDashboardPage: React.FC = () => {
           <Button
             variant="primary"
             onClick={() => navigate('/billing/contracts/new')}
-            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs h-9 cursor-pointer"
+            className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs h-9 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 mr-1.5" />
             Create Contract
@@ -279,7 +279,7 @@ export const ContractsDashboardPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 cursor-pointer ${
                 activeTab === tab.id
-                  ? 'bg-[#2563EB] text-white shadow-2xs'
+                  ? 'bg-[#244A70] text-white shadow-2xs'
                   : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
               }`}
             >
@@ -355,7 +355,7 @@ export const ContractsDashboardPage: React.FC = () => {
                       <Button
                         variant="primary"
                         onClick={() => navigate('/billing/contracts/new')}
-                        className="mt-2 text-xs bg-[#2563EB]"
+                        className="mt-2 text-xs bg-[#244A70] hover:bg-[#1B3856] text-white"
                       >
                         Create Contract Draft
                       </Button>
@@ -481,7 +481,7 @@ export const ContractsDashboardPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => navigate(`/billing/contracts/${c.id}`)}
-                            className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-xs"
+                            className="px-2.5 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white rounded-lg font-semibold text-[11px] transition-colors cursor-pointer inline-flex items-center gap-1 shadow-xs"
                             title="Open full contract document to sign electronically"
                           >
                             <PenTool className="w-3 h-3" />
@@ -566,7 +566,7 @@ export const ContractsDashboardPage: React.FC = () => {
                 size="sm"
                 onClick={handleQuickSignSubmit}
                 disabled={isSigningSubmitting}
-                className="bg-[#2563EB]"
+                className="bg-[#244A70] hover:bg-[#1B3856] text-white"
               >
                 {isSigningSubmitting ? (
                   <>

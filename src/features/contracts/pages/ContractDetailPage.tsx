@@ -282,7 +282,7 @@ export const ContractDetailPage: React.FC = () => {
         </div>
         <h2 className="text-xl font-bold text-slate-900 mb-2">Contract Not Found</h2>
         <p className="text-sm text-slate-600 mb-6">{error || 'This contract does not exist or you do not have permission to view it.'}</p>
-        <Button onClick={() => navigate('/billing/contracts')} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={() => navigate('/billing/contracts')} className="bg-[#244A70] hover:bg-[#1B3856] text-white">
           Return to Contracts
         </Button>
       </div>
@@ -408,7 +408,7 @@ export const ContractDetailPage: React.FC = () => {
               <Button
                 size="sm"
                 onClick={() => setActiveTab('overview')}
-                className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                className="text-xs bg-[#244A70] hover:bg-[#1B3856] text-white font-bold"
               >
                 <PenTool className="w-3.5 h-3.5 mr-1" />
                 {isCustomerSigned ? 'View Signature & Billing' : 'Proceed to Mouse E-Signing'}
@@ -788,7 +788,7 @@ export const ContractDetailPage: React.FC = () => {
                     <Button
                       type="submit"
                       disabled={signingLoading || !termsAgreed || !hasDrawn}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-xs transition disabled:opacity-50 cursor-pointer"
+                      className="w-full bg-[#244A70] hover:bg-[#1B3856] text-white font-bold py-2.5 rounded-xl shadow-xs transition disabled:opacity-50 cursor-pointer"
                     >
                       {signingLoading ? (
                         <span className="flex items-center justify-center gap-2">

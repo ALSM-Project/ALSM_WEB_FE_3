@@ -223,7 +223,14 @@ export interface CreateContractPayload {
   milestones?: ContractMilestone[];
 }
 
+export function clearContractsCache() {
+  cachedContractsList = null;
+  lastContractsFetch = 0;
+  inFlightContracts = null;
+}
+
 export const contractsApi = {
+  clearCache: clearContractsCache,
   getDashboardStats: async (): Promise<ContractDashboardStats> => {
     try {
       return await apiClient.get<ContractDashboardStats>('/api/enterprise-contracts/stats');

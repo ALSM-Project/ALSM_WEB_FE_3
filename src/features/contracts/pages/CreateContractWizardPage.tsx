@@ -269,7 +269,7 @@ export const CreateContractWizardPage: React.FC = () => {
                 <div
                   className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
                     isCurrent
-                      ? 'bg-[#2563EB] text-white shadow-2xs'
+                      ? 'bg-[#244A70] text-white shadow-2xs'
                       : isCompleted
                       ? 'bg-emerald-500 text-white'
                       : 'bg-slate-200 text-slate-600'
@@ -922,7 +922,7 @@ export const CreateContractWizardPage: React.FC = () => {
               <Button
                 variant="primary"
                 onClick={() => setCurrentStep((prev) => prev + 1)}
-                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs h-9 cursor-pointer"
+                className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs h-9 cursor-pointer"
               >
                 <span>Continue to {STEPS[currentStep].title}</span>
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
@@ -941,7 +941,7 @@ export const CreateContractWizardPage: React.FC = () => {
                   variant="primary"
                   onClick={() => handleCreateDraft(true)}
                   disabled={submitting}
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs h-9 cursor-pointer"
+                  className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs h-9 cursor-pointer"
                 >
                   {submitting ? (
                     <>
