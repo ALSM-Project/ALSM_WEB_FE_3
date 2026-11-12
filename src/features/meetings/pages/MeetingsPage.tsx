@@ -801,7 +801,7 @@ export const MeetingsPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => window.open(meeting.scheduling.meetingUrl, '_blank', 'noopener,noreferrer')}
-                            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#0652CC] hover:bg-[#0052CC] text-white text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer"
+                            className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer"
                           >
                             <Video className="w-3.5 h-3.5" />
                             <span>Join Google Meet</span>
@@ -1125,7 +1125,7 @@ export const MeetingsPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => window.open(selectedMeeting.scheduling.meetingUrl!, '_blank', 'noopener,noreferrer')}
-                    className="px-3 py-1.5 bg-[#0652CC] hover:bg-[#0052CC] text-white text-xs font-bold rounded-lg transition-colors flex items-center space-x-1"
+                    className="px-3 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold rounded-lg transition-colors flex items-center space-x-1"
                   >
                     <span>Join</span>
                     <ExternalLink className="w-3 h-3" />

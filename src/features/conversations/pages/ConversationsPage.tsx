@@ -378,7 +378,7 @@ export const ConversationsPage: React.FC = () => {
                 onClick={() => setTypeFilter('ALL')}
                 className={`px-2.5 py-1 rounded-md transition-colors ${
                   typeFilter === 'ALL'
-                    ? 'bg-[#0652CC] text-white'
+                    ? 'bg-[#244A70] text-white'
                     : 'bg-[#EBECF0] text-[#42526E] hover:bg-[#DFE1E6]'
                 }`}
               >
@@ -389,7 +389,7 @@ export const ConversationsPage: React.FC = () => {
                 onClick={() => setTypeFilter('PROJECT')}
                 className={`px-2.5 py-1 rounded-md transition-colors ${
                   typeFilter === 'PROJECT'
-                    ? 'bg-[#0652CC] text-white'
+                    ? 'bg-[#244A70] text-white'
                     : 'bg-[#EBECF0] text-[#42526E] hover:bg-[#DFE1E6]'
                 }`}
               >
@@ -400,7 +400,7 @@ export const ConversationsPage: React.FC = () => {
                 onClick={() => setTypeFilter('SUPPORT')}
                 className={`px-2.5 py-1 rounded-md transition-colors ${
                   typeFilter === 'SUPPORT'
-                    ? 'bg-[#0652CC] text-white'
+                    ? 'bg-[#244A70] text-white'
                     : 'bg-[#EBECF0] text-[#42526E] hover:bg-[#DFE1E6]'
                 }`}
               >
@@ -615,7 +615,7 @@ export const ConversationsPage: React.FC = () => {
                         <div
                           className={`max-w-[75%] rounded-2xl p-3.5 text-xs leading-relaxed shadow-2xs ${
                             isMe
-                              ? 'bg-[#0652CC] text-white rounded-tr-xs'
+                              ? 'bg-[#244A70] text-white rounded-tr-xs'
                               : 'bg-white text-[#091E42] border border-[#DFE3E8] rounded-tl-xs'
                           }`}
                         >
