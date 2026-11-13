@@ -9,7 +9,7 @@ export interface WorkspaceQuota {
   storageMaxGb: number;
 }
 
-export type ConversionType = 'BMS_DSPF_TO_FRONTEND' | 'COBOL_TO_JAVA';
+export type ConversionType = 'BMS_DSPF_TO_FRONTEND' | 'BMS_DSPF_TO_REACT' | 'COBOL_TO_JAVA';
 
 export type ServiceType = 'SELF_SERVICE' | 'MANAGED';
 

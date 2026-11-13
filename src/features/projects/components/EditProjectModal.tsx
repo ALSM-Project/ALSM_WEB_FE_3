@@ -129,7 +129,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ProjectStatus)}
-              className="w-full bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] rounded-xl px-3 py-2 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0652CC]/20 focus:border-[#0652CC] transition-all"
+              className="w-full bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] rounded-xl px-3 py-2 text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#244A70]/20 focus:border-[#244A70] transition-all"
             >
               <option value="ACTIVE">ACTIVE</option>
               <option value="DRAFT">DRAFT</option>
@@ -146,7 +146,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
               placeholder="Briefly describe the scope of this modernization effort..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] rounded-xl p-3 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0652CC]/20 focus:border-[#0652CC] transition-all placeholder:text-[#6B778C]"
+              className="w-full bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] rounded-xl p-3 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#244A70]/20 focus:border-[#244A70] transition-all placeholder:text-[#6B778C]"
             />
           </div>
 
@@ -162,7 +162,7 @@ export const EditProjectModal: React.FC<EditProjectModalProps> = ({
             <Button
               type="submit"
               isLoading={loading}
-              className="bg-[#0652CC] hover:bg-[#0655FF] text-white text-xs px-5 py-2 font-bold shadow-xs space-x-1.5"
+              className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs px-5 py-2 font-bold shadow-xs space-x-1.5"
             >
               <Save className="w-4 h-4" />
               <span>Save Changes</span>
