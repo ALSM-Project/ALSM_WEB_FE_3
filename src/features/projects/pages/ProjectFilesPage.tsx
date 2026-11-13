@@ -602,7 +602,7 @@ export const ProjectFilesPage: React.FC = () => {
               </div>
 
               <div className="flex items-center justify-center gap-3 pt-1 flex-wrap">
-                <label className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-[#0652CC] hover:bg-[#0655FF] rounded-xl cursor-pointer shadow-2xs transition-colors">
+                <label className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-xl cursor-pointer shadow-2xs transition-colors">
                   <FolderPlus className="w-3.5 h-3.5" />
                   <span>Browse Files</span>
                   <input
@@ -661,7 +661,7 @@ export const ProjectFilesPage: React.FC = () => {
                 </div>
                 <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#2563EB] transition-all duration-300 rounded-full"
+                    className="h-full bg-[#244A70] transition-all duration-300 rounded-full"
                     style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
@@ -679,7 +679,7 @@ export const ProjectFilesPage: React.FC = () => {
                   onClick={() => setFilterCategory('ALL')}
                   className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                     filterCategory === 'ALL'
-                      ? 'bg-[#0652CC] text-white shadow-2xs'
+                      ? 'bg-[#244A70] text-white shadow-2xs'
                       : 'text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >
@@ -690,7 +690,7 @@ export const ProjectFilesPage: React.FC = () => {
                   onClick={() => setFilterCategory('SCREENS')}
                   className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                     filterCategory === 'SCREENS'
-                      ? 'bg-[#0652CC] text-white shadow-2xs'
+                      ? 'bg-[#244A70] text-white shadow-2xs'
                       : 'text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >
@@ -701,7 +701,7 @@ export const ProjectFilesPage: React.FC = () => {
                   onClick={() => setFilterCategory('PROGRAMS')}
                   className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                     filterCategory === 'PROGRAMS'
-                      ? 'bg-[#0652CC] text-white shadow-2xs'
+                      ? 'bg-[#244A70] text-white shadow-2xs'
                       : 'text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >
@@ -712,7 +712,7 @@ export const ProjectFilesPage: React.FC = () => {
                   onClick={() => setFilterCategory('COPYBOOKS')}
                   className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                     filterCategory === 'COPYBOOKS'
-                      ? 'bg-[#0652CC] text-white shadow-2xs'
+                      ? 'bg-[#244A70] text-white shadow-2xs'
                       : 'text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >
@@ -723,7 +723,7 @@ export const ProjectFilesPage: React.FC = () => {
                   onClick={() => setFilterCategory('DOCS')}
                   className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                     filterCategory === 'DOCS'
-                      ? 'bg-[#0652CC] text-white shadow-2xs'
+                      ? 'bg-[#244A70] text-white shadow-2xs'
                       : 'text-[#64748B] hover:bg-[#F1F5F9]'
                   }`}
                 >
@@ -888,7 +888,7 @@ export const ProjectFilesPage: React.FC = () => {
                           onClick={() => setCurrentPage(pageNum)}
                           className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                             safeFilePage === pageNum
-                              ? 'bg-[#0652CC] text-white shadow-2xs'
+                              ? 'bg-[#244A70] text-white shadow-2xs'
                               : 'bg-white border border-[#E2E8F0] text-[#0F172A] hover:bg-slate-50'
                           }`}
                         >
@@ -1076,7 +1076,7 @@ export const ProjectFilesPage: React.FC = () => {
                               download
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#0652CC] hover:bg-[#0655FF] shadow-2xs transition-colors"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] shadow-2xs transition-colors"
                             >
                               <Download className="w-3.5 h-3.5" />
                               <span>Download</span>
@@ -1143,7 +1143,7 @@ export const ProjectFilesPage: React.FC = () => {
                           onClick={() => setDelivPage(pageNum)}
                           className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                             safeDelivPage === pageNum
-                              ? 'bg-[#0652CC] text-white shadow-2xs'
+                              ? 'bg-[#244A70] text-white shadow-2xs'
                               : 'bg-white border border-[#E2E8F0] text-[#0F172A] hover:bg-slate-50'
                           }`}
                         >
@@ -1210,7 +1210,7 @@ export const ProjectFilesPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs font-bold text-white bg-[#0652CC] hover:bg-[#0655FF] rounded-lg cursor-pointer"
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg cursor-pointer"
                 >
                   Create Folder
                 </button>

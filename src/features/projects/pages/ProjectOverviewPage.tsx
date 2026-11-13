@@ -28,11 +28,13 @@ import { useProjectQuery, useProjectScreensQuery } from '../queries/useProjects'
 import type { Project } from '../types/project';
 
 const LEGACY_TYPE_LABEL: Record<Project['conversionType'], string> = {
+  BMS_DSPF_TO_REACT: 'BMS / DSPF Screen Maps',
   BMS_DSPF_TO_FRONTEND: 'BMS / DSPF Screen Maps',
   COBOL_TO_JAVA: 'COBOL Source Programs',
 };
 
 const TARGET_FRAMEWORK_LABEL: Record<Project['conversionType'], string> = {
+  BMS_DSPF_TO_REACT: 'React 19 (TypeScript + Tailwind)',
   BMS_DSPF_TO_FRONTEND: 'React 19 (TypeScript + Tailwind)',
   COBOL_TO_JAVA: 'Java 21 + Spring Boot',
 };
@@ -82,7 +84,7 @@ const ProjectOverviewContent: React.FC = () => {
         <div className="pt-2 flex items-center justify-center space-x-3">
           <Button
             onClick={() => navigate(ROUTES.PROJECTS.LIST)}
-            className="bg-[#0652CC] hover:bg-[#0655FF] text-white text-xs font-bold px-4 py-2"
+            className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold px-4 py-2"
           >
             Back to Projects List
           </Button>
@@ -299,7 +301,7 @@ const ProjectOverviewContent: React.FC = () => {
           <div className="flex items-center space-x-2 shrink-0">
             <Button
               onClick={() => navigate(ROUTES.PROJECTS.UPLOAD(project.id))}
-              className="bg-[#0652CC] hover:bg-[#0655FF] text-white text-xs font-bold space-x-1.5 shadow-2xs"
+              className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold space-x-1.5 shadow-2xs"
             >
               <Upload className="w-4 h-4" />
               <span>Upload Source</span>
@@ -576,7 +578,7 @@ const ProjectOverviewContent: React.FC = () => {
             </div>
             <Button
               onClick={() => setIsEditModalOpen(true)}
-              className="bg-[#0652CC] hover:bg-[#0655FF] text-white text-xs font-bold space-x-1.5"
+              className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold space-x-1.5"
             >
               <Pencil className="w-4 h-4" />
               <span>Edit Details</span>

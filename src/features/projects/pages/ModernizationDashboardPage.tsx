@@ -9,11 +9,13 @@ import { projectService } from '../services/project.service';
 import type { Project } from '../types/project';
 
 const LEGACY_TYPE_LABEL: Record<Project['conversionType'], string> = {
+  BMS_DSPF_TO_REACT: 'BMS / DSPF',
   BMS_DSPF_TO_FRONTEND: 'BMS / DSPF',
   COBOL_TO_JAVA: 'COBOL',
 };
 
 const TARGET_FRAMEWORK_LABEL: Record<Project['conversionType'], string> = {
+  BMS_DSPF_TO_REACT: 'React (TypeScript)',
   BMS_DSPF_TO_FRONTEND: 'React (TypeScript)',
   COBOL_TO_JAVA: 'Java 21 (Spring Boot)',
 };
@@ -40,11 +42,11 @@ export const ModernizationDashboardPage: React.FC = () => {
     <div className="space-y-6">
       {/* Refined Enterprise Hero Section */}
       <div className="bg-white border border-[#E2E8F0] rounded-xl p-6 lg:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#2563EB]" />
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#244A70]" />
 
         <div className="space-y-2.5 max-w-3xl pl-1">
-          <div className="inline-flex items-center space-x-2 bg-[#EFF6FF] border border-[#DBEAFE] px-3 py-1 rounded-full text-xs font-semibold text-[#1D4ED8]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB]" />
+          <div className="inline-flex items-center space-x-2 bg-[#F0F4F8] border border-[#DCE3EC] px-3 py-1 rounded-full text-xs font-semibold text-[#244A70]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#244A70]" />
             <span>ALSM Modernization Workspace</span>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-bold tracking-tight text-[#0F172A]">
@@ -58,7 +60,7 @@ export const ModernizationDashboardPage: React.FC = () => {
         <div className="flex items-center space-x-3 shrink-0">
           <Button
             onClick={() => setIsCreateModalOpen(true)}
-            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-sm border-none shadow-xs space-x-2 h-11 px-5 rounded-lg transition-colors cursor-pointer"
+            className="bg-[#244A70] hover:bg-[#1B3856] text-white font-semibold text-sm border-none shadow-xs space-x-2 h-11 px-5 rounded-lg transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create Project</span>
@@ -95,7 +97,7 @@ export const ModernizationDashboardPage: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="w-3 h-3 rounded-full bg-[#2563EB]"></div>
+          <div className="w-3 h-3 rounded-full bg-[#244A70]"></div>
         </button>
 
         <button
@@ -153,7 +155,7 @@ export const ModernizationDashboardPage: React.FC = () => {
           </div>
           <Link
             to={ROUTES.PROJECTS.LIST}
-            className="inline-flex items-center space-x-1.5 bg-white hover:bg-[#F8FAFC] text-[#2563EB] hover:text-[#1D4ED8] border border-[#CBD5E1] hover:border-[#93C5FD] text-xs sm:text-sm font-medium h-9 px-3.5 sm:px-4 rounded-lg shadow-2xs hover:shadow-xs transition-all cursor-pointer group shrink-0"
+            className="inline-flex items-center space-x-1.5 bg-white hover:bg-[#F8FAFC] text-[#244A70] hover:text-[#1B3856] border border-[#CBD5E1] hover:border-[#B8C7D9] text-xs sm:text-sm font-medium h-9 px-3.5 sm:px-4 rounded-lg shadow-2xs hover:shadow-xs transition-all cursor-pointer group shrink-0"
           >
             <span>View All Projects</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
@@ -162,7 +164,7 @@ export const ModernizationDashboardPage: React.FC = () => {
 
         {recentProjects.length === 0 ? (
           <div className="bg-white border border-[#E2E8F0] rounded-xl p-12 text-center space-y-4 shadow-xs">
-            <div className="w-14 h-14 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE] mx-auto flex items-center justify-center">
+            <div className="w-14 h-14 rounded-full bg-[#F0F4F8] text-[#244A70] border border-[#DCE3EC] mx-auto flex items-center justify-center">
               <FolderKanban className="w-7 h-7" />
             </div>
             <div className="space-y-1.5">
@@ -173,7 +175,7 @@ export const ModernizationDashboardPage: React.FC = () => {
             </div>
             <Button
               onClick={() => setIsCreateModalOpen(true)}
-              className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold h-10 px-5 rounded-lg shadow-xs cursor-pointer"
+              className="bg-[#244A70] hover:bg-[#1B3856] text-white text-sm font-semibold h-10 px-5 rounded-lg shadow-xs cursor-pointer"
             >
               <Plus className="w-4 h-4 mr-2" />
               <span>Create Project</span>
