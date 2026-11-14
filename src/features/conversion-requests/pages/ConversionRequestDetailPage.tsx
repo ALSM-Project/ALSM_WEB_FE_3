@@ -61,7 +61,7 @@ export const ConversionRequestDetailPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/conversion-requests')}
-            className="px-4 py-2 text-xs font-bold text-white bg-[#2563EB] rounded-lg"
+            className="px-4 py-2 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg"
           >
             Back to Requests
           </button>

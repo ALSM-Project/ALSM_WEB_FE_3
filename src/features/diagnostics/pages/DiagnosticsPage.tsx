@@ -14,7 +14,10 @@ import {
   Clock,
   Filter,
   X,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
+import { useOptionalAuth } from '@/app/providers';
 import { diagnosticsService } from '../services/diagnostics.service';
 import type { DiagnosticLog } from '../types/diagnostics';
 import { Button } from '@/shared/ui/Button';
@@ -25,6 +28,13 @@ import { ROUTES } from '@/shared/constants/routes';
 export const DiagnosticsPage: React.FC = () => {
   const { projectId = 'proj-acme' } = useParams();
   const navigate = useNavigate();
+  const auth = useOptionalAuth();
+  const user = auth?.user;
+  const isViewerOrPartner =
+    user?.role === 'VIEWER' ||
+    user?.role === 'PARTNER' ||
+    (user?.roles || []).some((r: string) => ['VIEWER', 'PARTNER'].includes(String(r).toUpperCase()));
+
   const [logs, setLogs] = useState<DiagnosticLog[]>([]);
   const [selectedId, setSelectedId] = useState<string>('diag-1');
   const [severityFilter, setSeverityFilter] = useState('ALL');
@@ -134,7 +144,7 @@ export const DiagnosticsPage: React.FC = () => {
         actions={
           <Button
             onClick={handleDownloadFullLog}
-            className="bg-[#0652CC] hover:bg-[#0655FF] text-white space-x-1.5 text-xs font-bold shadow-xs shrink-0 cursor-pointer"
+            className="bg-[#244A70] hover:bg-[#1B3856] text-white space-x-1.5 text-xs font-bold shadow-xs shrink-0 cursor-pointer"
           >
             <Download className="w-4 h-4" aria-hidden="true" />
             <span>Download Full Log</span>
@@ -326,8 +336,65 @@ export const DiagnosticsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Split Details View: Source Code Snippet (Left) & AI Resolution (Right) */}
-      {selectedLog && (
+      {/* Split Details View: Source Code Snippet (Left) & AI Resolution (Right) or Partner Sanitized View (BR-59) */}
+      {selectedLog && isViewerOrPartner ? (
+        <div className="bg-white border border-[#D9E2EC] rounded-xl p-6 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#E5EAF0] pb-3">
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="w-5 h-5 text-[#244A70]" />
+              <span className="text-[#091E42] font-bold text-sm">
+                Partner Error Summary (Sanitized per BR-59)
+              </span>
+            </div>
+            <span className="font-mono text-xs font-bold text-[#0652CC] bg-[#E8F1FF] px-2.5 py-1 rounded-lg border border-blue-200">
+              {selectedLog.screenName}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-2">
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-xs text-slate-500 font-medium">Error Code</span>
+              <p className="text-sm font-bold text-[#091E42] mt-0.5">{selectedLog.errorCode}</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-xs text-slate-500 font-medium">Severity</span>
+              <p className="text-sm font-bold text-[#091E42] mt-0.5">{selectedLog.severity}</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-xs text-slate-500 font-medium">Remediation Status</span>
+              <p className="text-sm font-bold text-emerald-700 mt-0.5">
+                {selectedLog.resolved
+                  ? 'Remediated & Verified'
+                  : selectedLog.escalated
+                  ? 'Under Engineering Review'
+                  : 'Resolution Pending'}
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-lg text-xs text-amber-900 flex items-start space-x-3">
+            <Lock className="w-4 h-4 text-amber-700 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">Internal Execution Details Restricted</p>
+              <p className="mt-0.5 text-amber-800">
+                Raw execution stack traces, underlying source code lines, and internal infrastructure paths are restricted for external partner visibility in accordance with compliance rule BR-59.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-3 border-t border-[#E5EAF0]">
+            <Button
+              variant="secondary"
+              onClick={handleEscalate}
+              disabled={selectedLog.escalated}
+              className="space-x-1.5 text-xs font-semibold border-rose-200 text-rose-700 bg-rose-50 hover:bg-rose-100 px-4 py-2 rounded-xl cursor-pointer"
+            >
+              <Headphones className="w-4 h-4 text-rose-600" aria-hidden="true" />
+              <span>{selectedLog.escalated ? 'Support Ticket Active' : 'Request Engineering Support'}</span>
+            </Button>
+          </div>
+        </div>
+      ) : selectedLog ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Card 1: Source Code Snippet */}
           <div className="bg-white border border-[#D9E2EC] rounded-xl p-5 space-y-4 shadow-2xs flex flex-col justify-between">
@@ -424,7 +491,7 @@ export const DiagnosticsPage: React.FC = () => {
                 onClick={handleApplyPatch}
                 isLoading={patching}
                 disabled={selectedLog.resolved}
-                className="w-full sm:w-auto space-x-1.5 text-xs font-bold bg-[#0652CC] hover:bg-[#0655FF] text-white px-4 py-2 rounded-xl shadow-xs cursor-pointer"
+                className="w-full sm:w-auto space-x-1.5 text-xs font-bold bg-[#244A70] hover:bg-[#1B3856] text-white px-4 py-2 rounded-xl shadow-xs cursor-pointer"
               >
                 <Wrench className="w-4 h-4" aria-hidden="true" />
                 <span>{selectedLog.resolved ? 'Patch Applied & Retried' : 'Apply Patch & Retry'}</span>
@@ -442,7 +509,7 @@ export const DiagnosticsPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Bottom Global Action Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-[#E5EAF0]">
@@ -459,7 +526,7 @@ export const DiagnosticsPage: React.FC = () => {
         <Button
           variant="primary"
           onClick={handleDownloadFullLog}
-          className="w-full sm:w-auto space-x-1.5 text-xs font-bold bg-[#0652CC] hover:bg-[#0655FF] text-white px-5 py-2 rounded-xl shadow-xs cursor-pointer"
+          className="w-full sm:w-auto space-x-1.5 text-xs font-bold bg-[#244A70] hover:bg-[#1B3856] text-white px-5 py-2 rounded-xl shadow-xs cursor-pointer"
         >
           <Download className="w-4 h-4" aria-hidden="true" />
           <span>Download Log Archive</span>

@@ -236,7 +236,7 @@ export const SubmitConversionRequestPage: React.FC = () => {
             <button
               type="button"
               onClick={() => navigate('/conversion-requests')}
-              className="w-full sm:w-auto px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
             >
               View My Requests
             </button>
@@ -302,7 +302,7 @@ export const SubmitConversionRequestPage: React.FC = () => {
                       isCompleted
                         ? 'bg-emerald-600 text-white'
                         : isCurrent
-                        ? 'bg-[#2563EB] text-white ring-4 ring-[#EFF6FF]'
+                        ? 'bg-[#244A70] text-white ring-4 ring-[#F0F4F8]'
                         : 'bg-[#F1F5F9] text-[#64748B]'
                     }`}
                   >
@@ -574,7 +574,7 @@ export const SubmitConversionRequestPage: React.FC = () => {
               </p>
 
               <div className="flex items-center justify-center gap-3 mt-4">
-                <label className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-lg cursor-pointer transition-colors">
+                <label className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg cursor-pointer transition-colors">
                   <span>Upload Source Code Archive</span>
                   <input
                     type="file"
@@ -765,7 +765,7 @@ export const SubmitConversionRequestPage: React.FC = () => {
             <button
               type="button"
               onClick={handleNext}
-              className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-lg transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg transition-colors cursor-pointer"
             >
               <span>Continue</span>
               <ArrowRight className="w-3.5 h-3.5" />

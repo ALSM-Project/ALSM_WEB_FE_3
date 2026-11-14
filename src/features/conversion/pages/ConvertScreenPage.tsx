@@ -33,6 +33,9 @@ import { Tabs } from '@/shared/ui/Tabs';
 import { Button } from '@/shared/ui/Button';
 import { CodeEditor } from '../components/CodeEditor';
 import { ModernizationWorkflow, type WorkflowStepId } from '@/shared/ui/ModernizationWorkflow';
+import { projectService } from '@/features/projects/services/project.service';
+import { resolveWorkspace } from '@/features/projects/utils/conversionTypeResolver';
+import type { Project } from '@/features/projects/types/project';
 
 import { LiveTsxRenderer } from '../components/LiveTsxRenderer';
 import { generateScreenBundle, parseConvertedTsx, isDisplayableCodeFile } from '../utils/screenGenerator';
@@ -43,6 +46,8 @@ export const ConvertScreenPage: React.FC = () => {
   const { projectId = 'proj-acme', screenId = 'scr-login' } = useParams();
   const navigate = useNavigate();
 
+  const [project, setProject] = useState<Project | null>(null);
+  const [projectLoading, setProjectLoading] = useState(true);
   const [screen, setScreen] = useState<LegacyScreen | null>(null);
   const [activeTab, setActiveTab] = useState('preview');
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
@@ -51,6 +56,24 @@ export const ConvertScreenPage: React.FC = () => {
   const [editedFiles, setEditedFiles] = useState<Record<string, string>>({});
   const [previewLayout, setPreviewLayout] = useState<'screen' | 'split'>('screen');
   const [codeLayout, setCodeLayout] = useState<'code' | 'split'>('code');
+
+  useEffect(() => {
+    let cancelled = false;
+    if (projectId) {
+      setProjectLoading(true);
+      projectService
+        .getProjectById(projectId)
+        .then((proj) => {
+          if (!cancelled) setProject(proj);
+        })
+        .finally(() => {
+          if (!cancelled) setProjectLoading(false);
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,10 +86,16 @@ export const ConvertScreenPage: React.FC = () => {
     };
   }, [screenId]);
 
-  // UC-28: COBOL screens have their own Method Mapping (class/method renames), which is
-  // fetched by MethodMappingPage itself, not here — the BMS field-mapping endpoint has
-  // nothing to do with COBOL screens and must not be called for one.
-  const isCobol = screen?.sourceType === 'COBOL';
+  const isCobolProject = project?.conversionType === 'COBOL_TO_JAVA' || resolveWorkspace(project?.conversionType) === 'PROGRAMS';
+  const isCobol = isCobolProject || screen?.sourceType === 'COBOL' || Boolean(screen?.name?.toLowerCase().endsWith('.cbl'));
+
+  // Safety redirect: If the user navigated to /convert with fallback 'SCREEN'/'Screen' in a COBOL project,
+  // immediately direct them back to the Programs Workspace rather than displaying an invalid BMS/React state.
+  useEffect(() => {
+    if (!projectLoading && isCobol && (screenId.toLowerCase() === 'screen' || !screenId)) {
+      navigate(ROUTES.PROJECTS.SCREENS(projectId), { replace: true });
+    }
+  }, [projectLoading, isCobol, screenId, projectId, navigate]);
 
   useEffect(() => {
     // Wait until the screen's real sourceType is known — fetching before then would guess
@@ -433,13 +462,25 @@ export const ConvertScreenPage: React.FC = () => {
 
       {/* Modernization Workflow Step Bar */}
       <ModernizationWorkflow
+        workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'}
         currentStep="convert"
-        completedSteps={completedWorkflowSteps}
+        completedSteps={isCobol ? ['upload', 'analyze'] : completedWorkflowSteps}
         onStepClick={(stepId) => {
-          if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-          if (stepId === 'validate') navigate(ROUTES.PROJECTS.REVIEW(projectId, screenId));
-          if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
-          if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          if (isCobol) {
+            if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+            if (stepId === 'analyze') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'convert') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'validate') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'review' || stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          } else {
+            if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+            if (stepId === 'mapping') navigate(ROUTES.PROJECTS.MAPPING(projectId, screenId));
+            if (stepId === 'conversion' || stepId === 'convert') navigate(ROUTES.PROJECTS.CONVERT(projectId, screenId));
+            if (stepId === 'validation' || stepId === 'validate' || stepId === 'review') navigate(ROUTES.PROJECTS.REVIEW(projectId, screenId));
+            if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          }
         }}
       />
 
@@ -463,7 +504,7 @@ export const ConvertScreenPage: React.FC = () => {
             <Sliders className="w-4 h-4 text-brand-600" />
             <span>{isCobol ? 'Edit Method Mapping' : 'Edit Mapping & Correct'}</span>
           </Button>
-          <Button onClick={handleRunConverter} isLoading={isRunning} className="space-x-2 text-xs font-semibold bg-[#0652CC] hover:bg-[#0655FF]">
+          <Button onClick={handleRunConverter} isLoading={isRunning} className="space-x-2 text-xs font-semibold bg-[#244A70] hover:bg-[#1B3856]">
             <Play className="w-4 h-4" />
             <span>Run Conversion Algorithm</span>
           </Button>
@@ -513,7 +554,7 @@ export const ConvertScreenPage: React.FC = () => {
               </Button>
               <Button
                 onClick={() => navigate(ROUTES.PROJECTS.RESULT(projectId, screenId))}
-                className="text-xs font-semibold px-3.5 py-1.5 bg-[#0652CC] hover:bg-[#0655FF] text-white"
+                className="text-xs font-semibold px-3.5 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white"
               >
                 Inspect Results &rarr;
               </Button>
@@ -544,15 +585,17 @@ export const ConvertScreenPage: React.FC = () => {
       ) : (
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-slate-700 text-xs font-medium flex items-center justify-between">
           <span>
-            Source map loaded. Click <strong>"Run Conversion Algorithm"</strong> above to generate target React TSX code.
+            {isCobol
+              ? 'COBOL source loaded. Click "Run Conversion Algorithm" above to transpile into Java Spring Boot components.'
+              : 'Source map loaded. Click "Run Conversion Algorithm" above to generate target React TSX code.'}
           </span>
         </div>
       )}
 
       <Tabs
         tabs={[
-          { id: 'preview', label: 'Preview' },
-          { id: 'code', label: 'Code' },
+          ...(isCobol ? [] : [{ id: 'preview', label: 'Preview' }]),
+          { id: 'code', label: isCobol ? 'Code Transformation & Diff' : 'Code' },
           { id: 'mapping', label: isCobol ? 'Method Mapping' : 'Field Mapping' },
           {
             id: 'findings',
@@ -565,11 +608,11 @@ export const ConvertScreenPage: React.FC = () => {
                   : 'Validation',
           },
         ]}
-        activeTab={activeTab}
+        activeTab={isCobol && activeTab === 'preview' ? 'code' : activeTab}
         onChange={setActiveTab}
       />
 
-      {activeTab === 'preview' && (
+      {!isCobol && activeTab === 'preview' && (
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between text-xs text-slate-500 flex-wrap gap-2">
             <div className="flex items-center space-x-2">
@@ -646,7 +689,7 @@ export const ConvertScreenPage: React.FC = () => {
                           onClick={() => handleSaveCode(true)}
                           isLoading={saveLoading || isValidationActive}
                           disabled={saveLoading || isValidationActive}
-                          className="text-[11px] font-semibold px-2.5 py-1 bg-[#0652CC] hover:bg-[#0655FF] text-white"
+                          className="text-[11px] font-semibold px-2.5 py-1 bg-[#244A70] hover:bg-[#1B3856] text-white"
                         >
                           Save & Run AI Validation &rarr;
                         </Button>
@@ -714,7 +757,7 @@ export const ConvertScreenPage: React.FC = () => {
                 <Button
                   onClick={handleRunConverter}
                   isLoading={isRunning}
-                  className="w-full bg-[#0652CC] hover:bg-[#0655FF] text-white font-bold text-xs py-2.5 space-x-2 shadow-sm"
+                  className="w-full bg-[#244A70] hover:bg-[#1B3856] text-white font-bold text-xs py-2.5 space-x-2 shadow-sm"
                 >
                   <Play className="w-4 h-4" />
                   <span>Run Conversion Algorithm Now</span>
@@ -725,7 +768,7 @@ export const ConvertScreenPage: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'code' && (
+      {(activeTab === 'code' || (isCobol && activeTab === 'preview')) && (
         selectedFile ? (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -766,7 +809,7 @@ export const ConvertScreenPage: React.FC = () => {
                   onClick={() => handleSaveCode(true)}
                   isLoading={saveLoading || isValidationActive}
                   disabled={saveLoading || isValidationActive}
-                  className="text-xs font-semibold px-3 py-1.5 bg-[#0652CC] hover:bg-[#0655FF] text-white"
+                  className="text-xs font-semibold px-3 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white"
                 >
                   Save & Run AI Validation &rarr;
                 </Button>

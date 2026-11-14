@@ -21,6 +21,10 @@ import { Button } from '@/shared/ui/Button';
 import { EnsureQueryClient } from '@/shared/ui/EnsureQueryClient';
 import { conversionKeys } from '../queries/conversionKeys';
 import { projectKeys } from '@/features/projects/queries/projectKeys';
+import { projectService } from '@/features/projects/services/project.service';
+import { resolveWorkspace } from '@/features/projects/utils/conversionTypeResolver';
+import { UnsupportedProjectState } from '@/features/projects/components/UnsupportedProjectState';
+import type { Project } from '@/features/projects/types/project';
 
 const JAVA_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
@@ -35,6 +39,8 @@ const MethodMappingContent: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const [project, setProject] = useState<Project | null>(null);
+  const [projectLoading, setProjectLoading] = useState(true);
   const [entries, setEntries] = useState<MethodMappingEntry[]>([]);
   const [initialEntries, setInitialEntries] = useState<MethodMappingEntry[]>([]);
   const [hasGeneratedCode, setHasGeneratedCode] = useState(false);
@@ -47,6 +53,34 @@ const MethodMappingContent: React.FC = () => {
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [kindFilter, setKindFilter] = useState<'ALL' | 'CLASS' | 'METHOD'>('ALL');
+
+  useEffect(() => {
+    let cancelled = false;
+    setProjectLoading(true);
+    projectService
+      .getProjectById(projectId)
+      .then((p) => {
+        if (cancelled) return;
+        setProject(p ?? null);
+        setProjectLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setProjectLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
+
+  const workspace = resolveWorkspace(project?.conversionType);
+
+  useEffect(() => {
+    if (!projectLoading && project) {
+      if (workspace === 'SCREENS') {
+        navigate(ROUTES.PROJECTS.MAPPING(projectId, screenId), { replace: true });
+      }
+    }
+  }, [projectLoading, project, workspace, projectId, screenId, navigate]);
 
   const loadData = useCallback(() => {
     let cancelled = false;
@@ -156,6 +190,16 @@ const MethodMappingContent: React.FC = () => {
     }
   };
 
+  if (!projectLoading && project && workspace === 'UNSUPPORTED') {
+    return (
+      <UnsupportedProjectState
+        conversionType={project.conversionType}
+        backUrl={ROUTES.PROJECTS.LIST}
+        backLabel="Back to Projects List"
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -203,7 +247,7 @@ const MethodMappingContent: React.FC = () => {
               onClick={handleSave}
               isLoading={saving}
               disabled={loading || !hasGeneratedCode || invalidNames.length > 0}
-              className="space-x-1.5 text-xs font-bold bg-[#0652CC] hover:bg-[#0655FF] text-white shadow-2xs"
+              className="space-x-1.5 text-xs font-bold bg-[#244A70] hover:bg-[#1B3856] text-white shadow-2xs"
             >
               <Save className="w-4 h-4" />
               <span>Save Mapping</span>
@@ -329,7 +373,7 @@ const MethodMappingContent: React.FC = () => {
           </p>
           <Button
             onClick={() => navigate(ROUTES.PROJECTS.CONVERT(projectId, screenId))}
-            className="bg-[#0652CC] hover:bg-[#0655FF] text-white text-xs font-bold px-4 py-2 mt-2"
+            className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold px-4 py-2 mt-2"
           >
             Run Logic Conversion
           </Button>

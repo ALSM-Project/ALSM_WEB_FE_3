@@ -508,7 +508,7 @@ const InitialQualityReviewContent: React.FC = () => {
 
           <Button
             onClick={() => navigate(ROUTES.PROJECTS.REVIEW(projectId, screenId))}
-            className="space-x-1.5 text-xs font-bold bg-[#0652CC] hover:bg-[#0655FF] text-white"
+            className="space-x-1.5 text-xs font-bold bg-[#244A70] hover:bg-[#1B3856] text-white"
           >
             <span>Continue to AI Validation</span>
             <ArrowRight className="w-4 h-4" />

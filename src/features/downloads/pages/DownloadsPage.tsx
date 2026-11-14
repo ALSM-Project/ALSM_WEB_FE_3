@@ -164,7 +164,7 @@ export const DownloadsPage: React.FC = () => {
                         <a
                           href={item.downloadUrl}
                           download
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-lg transition-colors cursor-pointer shadow-2xs"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg transition-colors cursor-pointer shadow-2xs"
                         >
                           <Download className="w-3.5 h-3.5" />
                           Download Bundle

@@ -244,7 +244,7 @@ export const ManagedProjectDetailPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/meetings')}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-lg transition-colors cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg transition-colors cursor-pointer shadow-2xs"
           >
             <Calendar className="w-3.5 h-3.5" />
             Schedule Review Call
@@ -371,7 +371,7 @@ export const ManagedProjectDetailPage: React.FC = () => {
                     onClick={() => setStatusFilter(st)}
                     className={`px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
                       statusFilter === st
-                        ? 'bg-[#2563EB] text-white'
+                        ? 'bg-[#244A70] text-white'
                         : 'bg-[#F8FAFC] text-[#64748B] hover:bg-slate-200 border border-[#E2E8F0]'
                     }`}
                   >
@@ -469,7 +469,7 @@ export const ManagedProjectDetailPage: React.FC = () => {
                             onClick={() => setScreenPage(pageNum)}
                             className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                               safeScreenPage === pageNum
-                                ? 'bg-[#0652CC] text-white shadow-2xs'
+                                ? 'bg-[#244A70] text-white shadow-2xs'
                                 : 'bg-white border border-[#E2E8F0] text-[#0F172A] hover:bg-slate-50'
                             }`}
                           >
@@ -500,7 +500,7 @@ export const ManagedProjectDetailPage: React.FC = () => {
                 </p>
                 <Button
                   onClick={() => navigate(`/project-files?projectId=${project.id}`)}
-                  className="bg-[#0652CC] hover:bg-[#0655FF] text-white text-xs font-bold mt-2"
+                  className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold mt-2"
                 >
                   Go to Project Files
                 </Button>

@@ -78,7 +78,7 @@ export const ManagedProjectsListPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#0652CC] hover:bg-[#0655FF] rounded-lg transition-colors cursor-pointer shadow-2xs"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg transition-colors cursor-pointer shadow-2xs"
           >
             <Plus className="w-3.5 h-3.5" />
             Create Project
@@ -136,7 +136,7 @@ export const ManagedProjectsListPage: React.FC = () => {
           </p>
           <button
             onClick={() => navigate('/conversion-requests/new')}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563EB] text-white rounded-lg text-xs font-bold"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#244A70] hover:bg-[#1B3856] text-white rounded-lg text-xs font-bold"
           >
             <Send className="w-3.5 h-3.5" />
             Submit Modernization Request
@@ -186,7 +186,7 @@ export const ManagedProjectsListPage: React.FC = () => {
                     </div>
                     <div className="w-full h-1.5 bg-[#F1F5F9] rounded-full overflow-hidden border border-[#E2E8F0]">
                       <div
-                        className="h-full bg-[#2563EB] rounded-full transition-all duration-300"
+                        className="h-full bg-[#244A70] rounded-full transition-all duration-300"
                         style={{ width: `${progress}%` }}
                       />
                     </div>

@@ -403,7 +403,7 @@ export const ManagedDashboardPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-lg transition-colors cursor-pointer shadow-xs"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#244A70] hover:bg-[#1B3856] rounded-lg transition-colors cursor-pointer shadow-xs"
           >
             <Plus className="w-4 h-4" />
             <span>Create Project</span>
@@ -518,7 +518,7 @@ export const ManagedDashboardPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(true)}
-                  className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-[#2563EB] text-white text-xs font-semibold rounded-lg hover:bg-[#1D4ED8] transition-colors cursor-pointer"
+                  className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 bg-[#244A70] text-white text-xs font-semibold rounded-lg hover:bg-[#1B3856] transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Create Project</span>
@@ -606,7 +606,7 @@ export const ManagedDashboardPage: React.FC = () => {
                 </div>
                 <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-[#2563EB] rounded-full transition-all duration-300"
+                    className="h-full bg-[#244A70] rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(100, Math.max(0, screensUsagePct))}%` }}
                   />
                 </div>

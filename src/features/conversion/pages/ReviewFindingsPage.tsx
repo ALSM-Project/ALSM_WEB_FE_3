@@ -1,9 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import {
   AlertCircle,
   ArrowRight,
-  Bot,
   CheckCircle2,
   Clock3,
   Download,
@@ -11,6 +10,7 @@ import {
   LoaderCircle,
   RotateCcw,
   Sliders,
+  ScanSearch,
 } from 'lucide-react';
 import { ApiError } from '@/services/api/apiError';
 import { ROUTES } from '@/shared/constants/routes';
@@ -22,6 +22,7 @@ import { useConversionResult } from '../queries/useConversionResult';
 import {
   useTriggerAiValidation,
   useReviewValidationFinding,
+  useApplyAiFix,
   useValidationFindings,
   useValidationRun,
   useValidationRuns,
@@ -93,7 +94,7 @@ function StatePanel({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">
-      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#E8F1FF] border border-[#D4E3FC] text-[#244A70] shadow-sm">
         {icon}
       </div>
       <h2 className="text-base font-bold text-slate-900">{title}</h2>
@@ -106,6 +107,12 @@ function StatePanel({
 const ReviewFindingsContent: React.FC = () => {
   const { projectId = '', screenId = '' } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const autoRunTriggeredRef = React.useRef(false);
+
+  const shouldAutoRun =
+    searchParams.get('autoRun') === 'true' || Boolean((location.state as any)?.autoRun);
 
   const [screen, setScreen] = useState<LegacyScreen | null>(null);
 
@@ -145,9 +152,29 @@ const ReviewFindingsContent: React.FC = () => {
   const completedRun = currentRun?.status === ValidationRunStatus.COMPLETED;
   const findingsQuery = useValidationFindings(projectId, currentRun?.id, completedRun);
   const reviewFinding = useReviewValidationFinding(projectId, currentRun?.id);
+  const applyAiFix = useApplyAiFix(projectId, currentRun?.id);
+  const [fixingFindingId, setFixingFindingId] = useState<string | null>(null);
+  const [aiFixSuccessMessage, setAiFixSuccessMessage] = useState<string | null>(null);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
   const [selectedGeneratedFilePath, setSelectedGeneratedFilePath] = useState<string | null>(null);
   const [notApplicableFinding, setNotApplicableFinding] = useState<ValidationFinding | null>(null);
+
+  const handleAcceptAiFix = async (finding: ValidationFinding) => {
+    try {
+      setFixingFindingId(finding.id);
+      setAiFixSuccessMessage(null);
+      const res = await applyAiFix.mutateAsync(finding.id);
+      setAiFixSuccessMessage(res.explanation || 'AI Fix applied successfully! Code has been updated.');
+      await conversionResultQuery.refetch();
+      if (res.filePath) {
+        setSelectedGeneratedFilePath(res.filePath);
+      }
+    } catch (err) {
+      console.error('Failed to apply AI fix', err);
+    } finally {
+      setFixingFindingId(null);
+    }
+  };
 
   const pageState = deriveReviewFindingsPageState({
     conversion,
@@ -169,6 +196,21 @@ const ReviewFindingsContent: React.FC = () => {
   const continueDisabled = validationActive || triggerValidation.isPending || reviewFinding.isPending;
   const triggerError = triggerErrorMessage(triggerValidation.error);
   const reviewError = reviewErrorMessage(reviewFinding.error);
+
+  // Automatically trigger AI validation when arriving via "Run AI Code Validator"
+  useEffect(() => {
+    if (
+      shouldAutoRun &&
+      conversionCompleted &&
+      conversion?.id &&
+      !triggerValidation.isPending &&
+      !validationActive &&
+      !autoRunTriggeredRef.current
+    ) {
+      autoRunTriggeredRef.current = true;
+      triggerValidation.mutate();
+    }
+  }, [shouldAutoRun, conversionCompleted, conversion?.id, triggerValidation, validationActive]);
   const selectedFinding =
     findings.find((finding) => finding.id === selectedFindingId) ?? findings[0];
   const generatedFiles = (conversionResultQuery.data?.files ?? []).filter((f) =>
@@ -271,7 +313,7 @@ const ReviewFindingsContent: React.FC = () => {
       case 'NO_VALIDATION_RUN':
         return (
           <StatePanel
-            icon={<Bot className="h-5 w-5" />}
+            icon={<ScanSearch className="h-7 w-7" />}
             title="AI Validation has not been run for this conversion"
             action={runValidationButton('Run AI Validation')}
           >
@@ -311,12 +353,12 @@ const ReviewFindingsContent: React.FC = () => {
         return (
           <StatePanel
             icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
-            title="AI validation completed"
+            title="Validation Passed — All Clean"
             action={runValidationButton('Re-run AI Validation')}
           >
-            <p>No semantic findings were detected in this validation run.</p>
+            <p className="font-semibold text-emerald-800">No semantic discrepancies or syntax issues were detected in this validation run.</p>
             <p className="mt-2 font-medium text-slate-700">
-              AI validation does not guarantee semantic equivalence. If you modified the screen code, click Re-run AI Validation to analyze your changes.
+              The AI validation confirmed that your modernized Java code is semantically aligned and ready for production. You can now finalize and export the project.
             </p>
             {triggerError && (
               <p className="mt-3 font-semibold text-rose-700" role="alert">
@@ -361,6 +403,15 @@ const ReviewFindingsContent: React.FC = () => {
                   Saving review decision…
                 </p>
               )}
+              {aiFixSuccessMessage && (
+                <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-800 flex items-start gap-2.5 shadow-xs animate-in fade-in">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-emerald-900">AI Fix Applied &amp; Code Updated</p>
+                    <p className="mt-0.5 text-emerald-700">{aiFixSuccessMessage}</p>
+                  </div>
+                </div>
+              )}
               {reviewError && (
                 <p className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-medium text-rose-700" role="alert">
                   {reviewError}
@@ -372,13 +423,15 @@ const ReviewFindingsContent: React.FC = () => {
                     key={finding.id}
                     finding={finding}
                     isSelected={finding.id === selectedFinding?.id}
-                    isSubmitting={reviewFinding.isPending}
+                    isSubmitting={reviewFinding.isPending || applyAiFix.isPending}
+                    isFixing={fixingFindingId === finding.id}
                     onSelect={() => {
                       setSelectedFindingId(finding.id);
                       setSelectedGeneratedFilePath(null);
                     }}
                     onReview={submitReview}
                     onMarkNotApplicable={setNotApplicableFinding}
+                    onAcceptAiFix={handleAcceptAiFix}
                   />
                 ))}
               </div>
@@ -417,11 +470,10 @@ const ReviewFindingsContent: React.FC = () => {
                         key={file.relativePath}
                         type="button"
                         onClick={() => setSelectedGeneratedFilePath(file.relativePath)}
-                        className={`rounded-lg border px-2.5 py-1 text-xs font-mono ${
-                          file.relativePath === selectedGeneratedFile?.relativePath
+                        className={`rounded-lg border px-2.5 py-1 text-xs font-mono ${file.relativePath === selectedGeneratedFile?.relativePath
                             ? 'border-brand-300 bg-brand-50 font-semibold text-brand-700'
                             : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                        }`}
+                          }`}
                       >
                         {file.relativePath}
                       </button>
@@ -437,7 +489,7 @@ const ReviewFindingsContent: React.FC = () => {
                     <CodeViewer
                       code={
                         (selectedGeneratedFile.relativePath.toLowerCase().endsWith('.tsx') &&
-                         localStorage.getItem(`alsm_custom_code_${projectId}_${screenId}`)) ||
+                          localStorage.getItem(`alsm_custom_code_${projectId}_${screenId}`)) ||
                         selectedGeneratedFile.content
                       }
                       filename={selectedGeneratedFile.relativePath}
@@ -469,13 +521,24 @@ const ReviewFindingsContent: React.FC = () => {
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col space-y-6 bg-slate-50/30 pb-24">
       <ModernizationWorkflow
-        currentStep="validation"
-        completedSteps={['upload', 'conversion']}
+        currentStep={isCobol ? 'validate' : 'validation'}
+        workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'}
+        completedSteps={isCobol ? ['upload', 'analyze', 'convert'] : ['upload', 'conversion']}
         onStepClick={(stepId) => {
-          if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-          if (stepId === 'conversion') navigate(ROUTES.PROJECTS.CONVERT(projectId, screenId));
-          if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
-          if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          if (isCobol) {
+            if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+            if (stepId === 'analyze') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'convert' || stepId === 'conversion') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'validate' || stepId === 'validation') navigate(ROUTES.PROJECTS.REVIEW(projectId, screenId));
+            if (stepId === 'review' || stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          } else {
+            if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+            if (stepId === 'conversion' || stepId === 'convert') navigate(ROUTES.PROJECTS.CONVERT(projectId, screenId));
+            if (stepId === 'validation' || stepId === 'validate') navigate(ROUTES.PROJECTS.REVIEW(projectId, screenId));
+            if (stepId === 'result' || stepId === 'review') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          }
         }}
       />
 
@@ -548,8 +611,16 @@ const ReviewFindingsContent: React.FC = () => {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            <span>{reviewedCount} of {findings.length} findings reviewed</span>
-            <span className="text-slate-400">Review decisions are saved automatically.</span>
+            <span>
+              {findings.length === 0
+                ? 'All validations passed · 0 issues detected'
+                : `${reviewedCount} of ${findings.length} findings reviewed`}
+            </span>
+            <span className="text-slate-400">
+              {findings.length === 0
+                ? 'Your converted code is clean and ready to export.'
+                : 'Review decisions are saved automatically.'}
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <Button
