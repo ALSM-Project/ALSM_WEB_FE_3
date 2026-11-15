@@ -10,11 +10,7 @@ import { StatusBadge } from '@/shared/ui/Badge';
 import { Button } from '@/shared/ui/Button';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ModernizationWorkflow } from '@/shared/ui/ModernizationWorkflow';
-import { CobolTranspilerPipeline } from '../components/CobolTranspilerPipeline';
-import { ValidateBuildView } from '../components/ValidateBuildView';
 import { DependencyDiagnosticsModal } from '../components/DependencyDiagnosticsModal';
-import { resolveWorkspace, WORKSPACE_METADATA } from '@/features/projects/utils/conversionTypeResolver';
-import { UnsupportedProjectState } from '@/features/projects/components/UnsupportedProjectState';
 
 const PROGRAM_SOURCE_TYPES = new Set(['COBOL', 'RPG']);
 
@@ -23,7 +19,6 @@ export const ScreensListPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [projectLoading, setProjectLoading] = useState(true);
   const [allAssets, setAllAssets] = useState<LegacyScreen[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -36,14 +31,9 @@ export const ScreensListPage: React.FC = () => {
 
   useEffect(() => {
     if (projectId) {
-      setProjectLoading(true);
-      projectService
-        .getProjectById(projectId)
-        .then((p) => {
-          if (p) setProject(p);
-          setProjectLoading(false);
-        })
-        .catch(() => setProjectLoading(false));
+      projectService.getProjectById(projectId).then((p) => {
+        if (p) setProject(p);
+      });
     }
   }, [projectId]);
 
@@ -84,16 +74,17 @@ export const ScreensListPage: React.FC = () => {
     }
   };
 
-  const workspace = resolveWorkspace(project?.conversionType);
-  const isProgramProject = workspace === 'PROGRAMS';
-  const isPrograms = isProgramProject;
-  const activeTab = isProgramProject ? 'programs' : 'screens';
-  const workspaceMeta = workspace !== 'UNSUPPORTED' ? WORKSPACE_METADATA[workspace] : null;
+  // Screens (BMS/DSPF/TXT) vs Programs (COBOL/RPG) split by sourceType
+  const screens = allAssets.filter((a) => !PROGRAM_SOURCE_TYPES.has(a.sourceType));
+  const programs = allAssets.filter((a) => PROGRAM_SOURCE_TYPES.has(a.sourceType));
 
-  // Strict isolation of screens vs programs based on project conversion type
-  const activeFullList = isProgramProject
-    ? allAssets.filter((a) => PROGRAM_SOURCE_TYPES.has(a.sourceType) || /\.(cob|cbl)$/i.test(a.name))
-    : allAssets.filter((a) => !PROGRAM_SOURCE_TYPES.has(a.sourceType) && !/\.(cob|cbl)$/i.test(a.name));
+  // A project is dedicated either to screens OR to programs
+  const isProgramProject =
+    project?.conversionType === 'COBOL_TO_JAVA' ||
+    (allAssets.length > 0 && allAssets.every((a) => PROGRAM_SOURCE_TYPES.has(a.sourceType))) ||
+    (programs.length > 0 && screens.length === 0);
+
+  const activeTab = isProgramProject ? 'programs' : 'screens';
 
   const applyFilters = (items: LegacyScreen[]) =>
     items.filter((item) => {
@@ -108,9 +99,11 @@ export const ScreensListPage: React.FC = () => {
       return matchesSearch && matchesStatus;
     });
 
-  const activeList = applyFilters(activeFullList);
+  const filteredScreens = applyFilters(screens);
+  const filteredPrograms = applyFilters(programs);
+  const activeList = isProgramProject ? (filteredPrograms.length > 0 ? filteredPrograms : applyFilters(allAssets)) : (filteredScreens.length > 0 ? filteredScreens : applyFilters(allAssets));
+  const activeFullList = isProgramProject ? (programs.length > 0 ? programs : allAssets) : (screens.length > 0 ? screens : allAssets);
 
-  const [currentStageTab, setCurrentStageTab] = useState<'analyze' | 'convert' | 'validate'>('analyze');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -133,26 +126,15 @@ export const ScreensListPage: React.FC = () => {
     failed: activeFullList.filter((a) => a.status === 'Failed').length,
   };
 
-  if (!projectLoading && project && workspace === 'UNSUPPORTED') {
-    return (
-      <UnsupportedProjectState
-        conversionType={project.conversionType}
-        backUrl={ROUTES.PROJECTS.LIST}
-        backLabel="Back to Projects List"
-      />
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Reusable Standard PageHeader */}
       <PageHeader
-        title={workspaceMeta?.title ?? (isProgramProject ? 'Programs Workspace' : 'Screens Workspace')}
+        title={isProgramProject ? 'Programs Workspace' : 'Screens Workspace'}
         subtitle={
-          workspaceMeta?.description ??
-          (isProgramProject
-            ? 'Analyze, convert, validate, and inspect legacy COBOL business logic programs.'
-            : 'Analyze, convert, validate, and inspect legacy BMS/DSPF screen maps.')
+          isProgramProject
+            ? 'Analyze, convert, validate, and inspect COBOL business logic programs.'
+            : 'Analyze, convert, validate, and inspect legacy screen mapsets.'
         }
         actions={
           <div className="flex items-center space-x-3 shrink-0">
@@ -161,12 +143,12 @@ export const ScreensListPage: React.FC = () => {
               onClick={() => navigate(ROUTES.PROJECTS.BULK_CONVERT(projectId))}
               className="space-x-1.5 text-xs font-semibold"
             >
-              <Play className="w-4 h-4 text-[#244A70]" />
+              <Play className="w-4 h-4 text-[#0652CC]" />
               <span>Bulk Convert</span>
             </Button>
             <Button
               onClick={() => navigate(ROUTES.PROJECTS.UPLOAD(projectId))}
-              className="bg-[#244A70] hover:bg-[#1B3856] text-white space-x-1.5 text-xs font-bold shadow-xs cursor-pointer"
+              className="bg-[#0652CC] hover:bg-[#0655FF] text-white space-x-1.5 text-xs font-bold shadow-xs"
             >
               <Plus className="w-4 h-4" />
               <span>Upload Source File</span>
@@ -188,140 +170,30 @@ export const ScreensListPage: React.FC = () => {
       {/* Modernization Workflow Step Banner */}
       <ModernizationWorkflow
         currentStep="convert"
-        workflowType={isProgramProject ? 'PROGRAMS' : 'SCREENS'}
         completedSteps={['upload']}
         onStepClick={(stepId) => {
-          const firstScreenId = activeList[0]?.id;
+          const firstScreenId = activeList[0]?.id || 'Screen';
           if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-          if (isPrograms) {
-            if (stepId === 'analyze') setCurrentStageTab('analyze');
-            if (stepId === 'convert' || stepId === 'conversion') setCurrentStageTab('convert');
-            if (stepId === 'validate' || stepId === 'validation') setCurrentStageTab('validate');
-            if (stepId === 'review' || stepId === 'result') {
-              if (firstScreenId) navigate(ROUTES.PROJECTS.RESULT(projectId, firstScreenId));
-              else setCurrentStageTab('validate');
-            }
-            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
-          } else {
-            if (stepId === 'mapping') {
-              if (firstScreenId) navigate(ROUTES.PROJECTS.MAPPING(projectId, firstScreenId));
-            }
-            if (stepId === 'conversion' || stepId === 'convert') {
-              if (firstScreenId) navigate(ROUTES.PROJECTS.CONVERT(projectId, firstScreenId));
-            }
-            if (stepId === 'validation' || stepId === 'validate' || stepId === 'review') {
-              if (firstScreenId) navigate(ROUTES.PROJECTS.REVIEW(projectId, firstScreenId));
-            }
-            if (stepId === 'result') {
-              if (firstScreenId) navigate(ROUTES.PROJECTS.RESULT(projectId, firstScreenId));
-            }
-            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
-          }
+          if (stepId === 'mapping') navigate(activeTab === 'programs' ? ROUTES.PROJECTS.METHOD_MAPPING(projectId, firstScreenId) : ROUTES.PROJECTS.MAPPING(projectId, firstScreenId));
+          if (stepId === 'conversion') navigate(ROUTES.PROJECTS.CONVERT(projectId, firstScreenId));
+          if (stepId === 'validation' || stepId === 'review') navigate(ROUTES.PROJECTS.REVIEW(projectId, firstScreenId));
+          if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, firstScreenId));
+          if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
         }}
       />
 
-      {isPrograms && (
-        <div className="bg-white border border-[#D9E2EC] rounded-2xl p-1.5 shadow-2xs flex flex-wrap gap-1">
-          <button
-            type="button"
-            onClick={() => setCurrentStageTab('analyze')}
-            className={`flex items-center space-x-2 py-2 px-4 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-              currentStageTab === 'analyze'
-                ? 'bg-[#244A70] text-white shadow-xs'
-                : 'text-[#42526E] hover:bg-slate-100'
-            }`}
-          >
-            <span>Stage 2 — Analyze & Prepare (Passes 1–2.4)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentStageTab('convert')}
-            className={`flex items-center space-x-2 py-2 px-4 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-              currentStageTab === 'convert'
-                ? 'bg-[#244A70] text-white shadow-xs'
-                : 'text-[#42526E] hover:bg-slate-100'
-            }`}
-          >
-            <span>Stage 3 — Convert to Java (Pass 2.5)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setCurrentStageTab('validate')}
-            className={`flex items-center space-x-2 py-2 px-4 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
-              currentStageTab === 'validate'
-                ? 'bg-[#244A70] text-white shadow-xs'
-                : 'text-[#42526E] hover:bg-slate-100'
-            }`}
-          >
-            <span>Stage 4 — Validate & Build (Pass 3)</span>
-          </button>
-        </div>
-      )}
-
-      {isPrograms && currentStageTab === 'analyze' && (
-        <div className="space-y-6">
-          <CobolTranspilerPipeline
-            totalFiles={activeFullList.length}
-            programsCount={activeFullList.length}
-            copybooksCount={2}
-            mainProgramsCount={Math.max(1, Math.ceil(activeFullList.length * 0.7))}
-            subprogramsCount={Math.floor(activeFullList.length * 0.3)}
-            missingCopybooks={[]}
-            diagnosticsWarnings={[]}
-          />
-          <div className="flex justify-between items-center bg-white p-5 rounded-2xl border border-[#D9E2EC] shadow-2xs">
-            <div>
-              <p className="text-sm font-bold text-[#091E42]">Transpiler Analysis Passes Verified</p>
-              <p className="text-xs text-[#42526E]">Symbol resolution, ASTs, and paragraph graphs are ready for Java code generation.</p>
-            </div>
-            <Button
-              onClick={() => setCurrentStageTab('convert')}
-              className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold space-x-1.5 shadow-xs cursor-pointer"
-            >
-              <span>Proceed to Convert to Java</span>
-              <Play className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {isPrograms && currentStageTab === 'validate' && (
-        <ValidateBuildView
-          projectId={projectId}
-          projectName={project?.name}
-          onProceedToReview={() => {
-            const firstId = activeList[0]?.id;
-            if (firstId) {
-              navigate(ROUTES.PROJECTS.RESULT(projectId, firstId));
-            } else {
-              navigate(ROUTES.PROJECTS.EXPORT(projectId));
-            }
-          }}
-          onRunAiValidation={() => {
-            const firstId = activeList[0]?.id;
-            if (firstId) {
-              navigate(`${ROUTES.PROJECTS.REVIEW(projectId, firstId)}?autoRun=true`, {
-                state: { autoRun: true },
-              });
-            }
-          }}
-        />
-      )}
-
-      {(!isPrograms || currentStageTab === 'convert') && (
-      <>
       {/* Metric Cards - Interactive Filter & Quick Navigation */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* 1. Total Assets Card -> Filter ALL */}
         <button
           type="button"
           onClick={() => setStatusFilter('ALL')}
-          className={`text-left bg-white border p-4 rounded-xl flex items-center space-x-4 cursor-pointer transition-colors hover:border-[#244A70] ${
-            statusFilter === 'ALL' ? 'border-[#244A70] ring-2 ring-[#DCE3EC] bg-[#F0F4F8]/40' : 'border-[#D9E2EC]'
+          className={`text-left bg-white border p-4 rounded-xl flex items-center space-x-4 cursor-pointer transition-colors hover:border-[#0652CC] ${
+            statusFilter === 'ALL' ? 'border-[#0652CC] ring-2 ring-blue-100 bg-blue-50/20' : 'border-[#D9E2EC]'
           }`}
           title="Click to view all assets"
         >
-          <div className="w-11 h-11 bg-[#F0F4F8] text-[#244A70] border border-[#DCE3EC] rounded-xl flex items-center justify-center shrink-0">
+          <div className="w-11 h-11 bg-[#E8F1FF] text-[#0652CC] rounded-xl flex items-center justify-center shrink-0">
             <Layers className="w-5 h-5" />
           </div>
           <div>
@@ -393,7 +265,7 @@ export const ScreensListPage: React.FC = () => {
             placeholder={`Search ${activeTab === 'screens' ? 'legacy screens' : 'COBOL programs'} by name...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-[#F7F9FC] border border-[#D9E2EC] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#244A70] text-[#091E42] placeholder-slate-400"
+            className="w-full pl-9 pr-4 py-2 bg-[#F7F9FC] border border-[#D9E2EC] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#0652CC] text-[#091E42] placeholder-slate-400"
           />
         </div>
 
@@ -402,7 +274,7 @@ export const ScreensListPage: React.FC = () => {
             aria-label="Filter by status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#244A70]"
+            className="bg-[#F7F9FC] border border-[#D9E2EC] text-[#091E42] text-xs font-semibold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0652CC]"
           >
             <option value="ALL">Status: All</option>
             <option value="READY">Ready</option>
@@ -438,7 +310,7 @@ export const ScreensListPage: React.FC = () => {
                 <tr>
                   <td colSpan={5} className="py-8 px-4 text-center text-slate-500">
                     <div className="inline-flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-[#244A70] border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-[#0652CC] border-t-transparent rounded-full animate-spin" />
                       <span>Loading assets...</span>
                     </div>
                   </td>
@@ -454,20 +326,14 @@ export const ScreensListPage: React.FC = () => {
                 paginatedList.map((item) => (
                 <tr
                   key={item.id}
-                  onClick={() => {
-                    if (item.status === 'Completed' || item.status === 'Converted' || item.status === 'COMPLETED') {
-                      navigate(ROUTES.PROJECTS.RESULT(projectId, item.id));
-                    } else {
-                      navigate(ROUTES.PROJECTS.CONVERT(projectId, item.id));
-                    }
-                  }}
+                  onClick={() => navigate(ROUTES.PROJECTS.CONVERT(projectId, item.id))}
                   className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
                 >
                   {/* 1. SCREEN NAME (24%) */}
                   <td className="py-3.5 px-4 font-mono text-xs font-bold text-[#091E42]">
                     <div className="flex items-center space-x-2.5 min-w-0">
-                      <FileCode className="w-4 h-4 text-[#244A70] flex-shrink-0" />
-                      <span className="group-hover:text-[#244A70] group-hover:underline truncate">
+                      <FileCode className="w-4 h-4 text-[#0652CC] flex-shrink-0" />
+                      <span className="group-hover:text-[#0652CC] group-hover:underline truncate">
                         {item.name}
                       </span>
                     </div>
@@ -516,7 +382,7 @@ export const ScreensListPage: React.FC = () => {
                           {PROGRAM_SOURCE_TYPES.has(item.sourceType) || activeTab === 'programs' ? (
                             <Link
                               to={ROUTES.PROJECTS.METHOD_MAPPING(projectId, item.id)}
-                              className="inline-flex items-center space-x-1 text-xs text-[#244A70] font-semibold hover:bg-slate-100 bg-[#F0F4F8] px-2.5 py-1 rounded-md border border-[#DCE3EC] transition-colors"
+                              className="inline-flex items-center space-x-1 text-xs text-[#0652CC] font-semibold hover:bg-blue-100 bg-[#E8F1FF] px-2.5 py-1 rounded-md transition-colors"
                               title="Inspect Paragraph-to-Method Mapping"
                             >
                               <Code2 className="w-3.5 h-3.5" />
@@ -525,7 +391,7 @@ export const ScreensListPage: React.FC = () => {
                           ) : (
                             <Link
                               to={ROUTES.PROJECTS.MAPPING(projectId, item.id)}
-                              className="inline-flex items-center space-x-1 text-xs text-[#42526E] font-semibold hover:text-[#244A70] hover:bg-slate-100 px-2.5 py-1 rounded-md transition-colors"
+                              className="inline-flex items-center space-x-1 text-xs text-[#42526E] font-semibold hover:text-[#0652CC] hover:bg-slate-100 px-2.5 py-1 rounded-md transition-colors"
                               title="Inspect Field Mapping"
                             >
                               <Code2 className="w-3.5 h-3.5" />
@@ -535,7 +401,7 @@ export const ScreensListPage: React.FC = () => {
 
                           <Link
                             to={ROUTES.PROJECTS.CONVERT(projectId, item.id)}
-                            className="inline-flex items-center space-x-1 text-xs text-[#244A70] font-semibold hover:bg-slate-100 bg-[#F0F4F8] px-2.5 py-1 rounded-md border border-[#DCE3EC] transition-colors"
+                            className="inline-flex items-center space-x-1 text-xs text-[#0652CC] font-semibold hover:bg-blue-100 bg-[#E8F1FF] px-2.5 py-1 rounded-md transition-colors"
                             title="Algorithm Conversion Engine"
                           >
                             <Play className="w-3.5 h-3.5" />
@@ -612,7 +478,7 @@ export const ScreensListPage: React.FC = () => {
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${
                     currentPage === pageNum
-                      ? 'bg-[#244A70] text-white shadow-2xs'
+                      ? 'bg-[#0652CC] text-white shadow-2xs'
                       : 'bg-white border border-[#D9E2EC] text-[#42526E] hover:bg-slate-50'
                   }`}
                 >
@@ -631,8 +497,6 @@ export const ScreensListPage: React.FC = () => {
             </div>
           )}
         </div>
-      </>
-      )}
 
       <DependencyDiagnosticsModal
         isOpen={dependencyModalScreenId !== null}

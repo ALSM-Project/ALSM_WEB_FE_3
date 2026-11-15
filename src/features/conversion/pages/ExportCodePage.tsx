@@ -25,9 +25,6 @@ import type {
 import { ExportScreenSelector } from '../components/ExportScreenSelector';
 import { ExportFileTree } from '../components/ExportFileTree';
 import { ExportProgressModal } from '../components/ExportProgressModal';
-import { resolveWorkspace } from '@/features/projects/utils/conversionTypeResolver';
-import { UnsupportedProjectState } from '@/features/projects/components/UnsupportedProjectState';
-import { ModernizationWorkflow } from '@/shared/ui/ModernizationWorkflow';
 
 import { EnsureQueryClient } from '@/shared/ui/EnsureQueryClient';
 
@@ -68,17 +65,13 @@ const ExportCodeContent: React.FC = () => {
         ]);
         if (mounted) {
           setProject(projData);
-          const isProg = projData?.conversionType === 'COBOL_TO_JAVA';
-          const filteredScreens = isProg
-            ? screensData.filter((s) => s.sourceType === 'COBOL' || s.sourceType === 'RPG' || /\.(cob|cbl)$/i.test(s.name))
-            : screensData.filter((s) => s.sourceType !== 'COBOL' && s.sourceType !== 'RPG' && !/\.(cob|cbl)$/i.test(s.name));
-          setScreens(filteredScreens);
+          setScreens(screensData);
           // Default select all completed screens
-          const completedIds = filteredScreens
+          const completedIds = screensData
             .filter((s) => s.status === 'Completed')
             .map((s) => s.id);
           setSelectedScreenIds(
-            completedIds.length > 0 ? completedIds : filteredScreens.slice(0, 2).map((s) => s.id)
+            completedIds.length > 0 ? completedIds : screensData.slice(0, 2).map((s) => s.id)
           );
         }
       } catch (err) {
@@ -91,9 +84,6 @@ const ExportCodeContent: React.FC = () => {
       mounted = false;
     };
   }, [projectId]);
-
-  const workspace = resolveWorkspace(project?.conversionType);
-  const isJavaExport = workspace === 'PROGRAMS';
 
   // Current export configuration
   const exportConfig: ExportConfiguration = useMemo(() => {
@@ -245,44 +235,15 @@ const ExportCodeContent: React.FC = () => {
     );
   }
 
-  if (!isLoading && project && workspace === 'UNSUPPORTED') {
-    return (
-      <UnsupportedProjectState
-        conversionType={project.conversionType}
-        backUrl={ROUTES.PROJECTS.LIST}
-        backLabel="Back to Projects List"
-      />
-    );
-  }
-
   return (
     <div className="space-y-6 pb-24">
-
-      {/* Modernization Workflow Stepper */}
-      <ModernizationWorkflow
-        currentStep="export"
-        workflowType={isJavaExport ? 'PROGRAMS' : 'SCREENS'}
-        completedSteps={isJavaExport ? ['upload', 'analyze', 'convert', 'validate', 'review'] : ['upload', 'convert', 'validate']}
-        onStepClick={(stepId) => {
-          if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-          if (stepId === 'analyze' || stepId === 'convert') navigate(ROUTES.PROJECTS.SCREENS(projectId));
-          if (stepId === 'review' || stepId === 'validate') {
-            const firstId = screens[0]?.id;
-            if (firstId) {
-              navigate(ROUTES.PROJECTS.RESULT(projectId, firstId));
-            } else {
-              navigate(ROUTES.PROJECTS.SCREENS(projectId));
-            }
-          }
-        }}
-      />
 
       {/* Page Header (ALSM Design System) */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              {isJavaExport ? 'Export Java Project' : 'Export Code Package'}
+              Export Code Package
             </h1>
             <Badge variant="success" className="space-x-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -290,9 +251,7 @@ const ExportCodeContent: React.FC = () => {
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            {isJavaExport
-              ? 'Download the generated Java modernization package and build artifacts.'
-              : 'Package and download modernized React components, with optional application scaffolding.'}
+            Package and download modernized React components (from BMS/DSPF screens) or generated Java source (from COBOL programs), with optional application scaffolding.
           </p>
         </div>
 
@@ -336,7 +295,7 @@ const ExportCodeContent: React.FC = () => {
                 onClick={() => setOutputOption('scaffold')}
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   outputOption === 'scaffold'
-                    ? 'bg-[#F4F7FB] border-[#244A70] ring-2 ring-[#244A70]/20 shadow-xs'
+                    ? 'bg-blue-50/60 border-blue-500 ring-2 ring-blue-500/20 shadow-xs'
                     : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
                 }`}
               >
@@ -345,7 +304,7 @@ const ExportCodeContent: React.FC = () => {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                         outputOption === 'scaffold'
-                          ? 'bg-[#244A70] text-white shadow-xs'
+                          ? 'bg-blue-600 text-white shadow-xs'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -356,7 +315,7 @@ const ExportCodeContent: React.FC = () => {
                         <h3 className="text-sm font-bold text-slate-900">
                           Full Project Scaffold
                         </h3>
-                        <span className="text-[10px] bg-[#EEF1F6] text-[#244A70] font-bold px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">
                           Recommended
                         </span>
                       </div>
@@ -370,7 +329,7 @@ const ExportCodeContent: React.FC = () => {
                     name="outputFormat"
                     checked={outputOption === 'scaffold'}
                     onChange={() => setOutputOption('scaffold')}
-                    className="text-[#244A70] mt-1 focus:ring-[#244A70]"
+                    className="text-blue-600 mt-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -380,7 +339,7 @@ const ExportCodeContent: React.FC = () => {
                 onClick={() => setOutputOption('standalone')}
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   outputOption === 'standalone'
-                    ? 'bg-[#F4F7FB] border-[#244A70] ring-2 ring-[#244A70]/20 shadow-xs'
+                    ? 'bg-blue-50/60 border-blue-500 ring-2 ring-blue-500/20 shadow-xs'
                     : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
                 }`}
               >
@@ -389,7 +348,7 @@ const ExportCodeContent: React.FC = () => {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                         outputOption === 'standalone'
-                          ? 'bg-[#244A70] text-white shadow-xs'
+                          ? 'bg-blue-600 text-white shadow-xs'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -409,7 +368,7 @@ const ExportCodeContent: React.FC = () => {
                     name="outputFormat"
                     checked={outputOption === 'standalone'}
                     onChange={() => setOutputOption('standalone')}
-                    className="text-[#244A70] mt-1 focus:ring-[#244A70]"
+                    className="text-blue-600 mt-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -419,7 +378,7 @@ const ExportCodeContent: React.FC = () => {
                 onClick={() => setOutputOption('storybook')}
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
                   outputOption === 'storybook'
-                    ? 'bg-[#F4F7FB] border-[#244A70] ring-2 ring-[#244A70]/20 shadow-xs'
+                    ? 'bg-blue-50/60 border-blue-500 ring-2 ring-blue-500/20 shadow-xs'
                     : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
                 }`}
               >
@@ -428,7 +387,7 @@ const ExportCodeContent: React.FC = () => {
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                         outputOption === 'storybook'
-                          ? 'bg-[#244A70] text-white shadow-xs'
+                          ? 'bg-blue-600 text-white shadow-xs'
                           : 'bg-slate-100 text-slate-600'
                       }`}
                     >
@@ -448,7 +407,7 @@ const ExportCodeContent: React.FC = () => {
                     name="outputFormat"
                     checked={outputOption === 'storybook'}
                     onChange={() => setOutputOption('storybook')}
-                    className="text-[#244A70] mt-1 focus:ring-[#244A70]"
+                    className="text-blue-600 mt-1 focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -631,7 +590,7 @@ const ExportCodeContent: React.FC = () => {
       <div style={{ left: 'var(--sidebar-width, 15rem)' }} className="fixed bottom-0 right-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 py-3.5 px-6 lg:px-8 shadow-lg transition-[left] duration-300">
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2 text-xs text-slate-600">
-            <span className="w-2 h-2 rounded-full bg-[#244A70]"></span>
+            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
             <span>
               <strong>{metrics.selectedScreensCount}</strong> screens selected •{' '}
               <strong>{metrics.totalFiles}</strong> files in bundle • Est. size:{' '}
