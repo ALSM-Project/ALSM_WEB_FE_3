@@ -36,7 +36,7 @@ const LEGACY_TYPE_LABEL: Record<Project['conversionType'], string> = {
 const TARGET_FRAMEWORK_LABEL: Record<Project['conversionType'], string> = {
   BMS_DSPF_TO_REACT: 'React 19 (TypeScript + Tailwind)',
   BMS_DSPF_TO_FRONTEND: 'React 19 (TypeScript + Tailwind)',
-  COBOL_TO_JAVA: 'Java 21 + Spring Boot',
+  COBOL_TO_JAVA: 'Java 17 + Spring Boot',
 };
 
 const ProjectOverviewContent: React.FC = () => {
@@ -156,7 +156,7 @@ const ProjectOverviewContent: React.FC = () => {
         },
         {
           title: '4. Logic Modernization Engine',
-          desc: 'Run deterministic conversion to synthesize Java 21 REST services, DTOs & repositories.',
+          desc: 'Run deterministic conversion to synthesize Java 17 REST services, DTOs & repositories.',
           icon: Cpu,
           link: firstScreenId
             ? ROUTES.PROJECTS.CONVERT(project.id, firstScreenId)
@@ -174,7 +174,7 @@ const ProjectOverviewContent: React.FC = () => {
         },
         {
           title: '6. Java Source & Studio',
-          desc: 'Inspect synthesized Java 21 Spring Boot service classes, DTOs, and method mapping trace.',
+          desc: 'Inspect synthesized Java 17 Spring Boot service classes, DTOs, and method mapping trace.',
           icon: Code2,
           link: firstScreenId
             ? ROUTES.PROJECTS.RESULT(project.id, firstScreenId)
@@ -183,7 +183,7 @@ const ProjectOverviewContent: React.FC = () => {
         },
         {
           title: '7. Export Java Package',
-          desc: 'Export finalized Java 21 Spring Boot source archive ready for Maven or Gradle build integration.',
+          desc: 'Export finalized Java 17 Spring Boot source archive ready for Maven or Gradle build integration.',
           icon: Download,
           link: ROUTES.PROJECTS.EXPORT(project.id),
           btnText: 'Export Java',
