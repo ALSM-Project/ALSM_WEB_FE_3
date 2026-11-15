@@ -3,7 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AppLayout from '@/shared/layouts/AppLayout';
 import PublicLayout from '@/shared/layouts/PublicLayout';
 import AccountSettingsLayout from '@/shared/layouts/AccountSettingsLayout';
-import { GuestRoute, ProtectedRoute, RoleGuard, ContractStatusGuard, PasswordCallbackPage, AuthCallbackPage } from './guards';
+import { GuestRoute, ProtectedRoute, RoleGuard, CapabilityGuard, ContractStatusGuard, PasswordCallbackPage, AuthCallbackPage } from './guards';
 
 // Feature Modules
 import { LandingPage, RegisterPage, LoginPage, PasswordRecoveryPage, FaqPage, ContactPage, ResetPasswordPage, VerifyEmailPage } from '@/features/auth';
@@ -200,38 +200,62 @@ export const router = createBrowserRouter([
           { path: '/managed-projects', element: <ManagedProjectsListPage /> },
           { path: '/managed-projects/:id', element: <ManagedProjectDetailPage /> },
           { path: '/project-progress', element: <ManagedProjectsListPage /> },
-          { path: '/deliverables', element: <DeliverablesPage /> },
-          { path: '/deliverables-sign-off', element: <Navigate to="/deliverables" replace /> },
-          { path: '/downloads', element: <DownloadsPage /> },
           { path: '/service-catalog', element: <ServiceCatalogPage /> },
-          { path: '/conversion-requests', element: <ConversionRequestsListPage /> },
-          { path: '/conversion-requests/:requestId', element: <ConversionRequestDetailPage /> },
+          {
+            element: <CapabilityGuard capability="deliverable.view" />,
+            children: [
+              { path: '/deliverables', element: <DeliverablesPage /> },
+              { path: '/deliverables-sign-off', element: <Navigate to="/deliverables" replace /> },
+              { path: '/downloads', element: <DownloadsPage /> },
+            ],
+          },
+          {
+            element: <CapabilityGuard capability="conversion_request.view" />,
+            children: [
+              { path: '/conversion-requests', element: <ConversionRequestsListPage /> },
+              { path: '/conversion-requests/:requestId', element: <ConversionRequestDetailPage /> },
+            ],
+          },
 
-          // Enterprise Organisation Routes (WEB_3)
-          { path: '/settings/organization', element: <OrganizationProfilePage /> },
-          { path: '/organization/profile', element: <Navigate to="/settings/organization" replace /> },
-          { path: '/organisation/profile', element: <Navigate to="/settings/organization" replace /> },
-          { path: '/account/company', element: <Navigate to="/settings/organization" replace /> },
-          { path: '/account/company-profile', element: <Navigate to="/settings/organization" replace /> },
-          { path: '/settings/team', element: <OrganizationMembersPage /> },
-          { path: '/settings/teams', element: <OrganizationTeamsPage /> },
-          { path: '/settings/members', element: <OrganizationMembersPage /> },
-          { path: '/organisation/members', element: <OrganizationMembersPage /> },
-          { path: '/organization/members', element: <OrganizationMembersPage /> },
-          { path: '/project-members', element: <Navigate to="/organization/members" replace /> },
-          { path: '/organisation/teams', element: <OrganizationTeamsPage /> },
-          { path: '/organization/teams', element: <OrganizationTeamsPage /> },
-          { path: '/internal-teams', element: <Navigate to="/organization/teams" replace /> },
-          { path: '/organisation/projects', element: <OrganizationProjectsPage /> },
-          { path: '/organization/projects', element: <OrganizationProjectsPage /> },
-          { path: '/settings/roles', element: <OrganizationRolesPage /> },
-          { path: '/organisation/roles', element: <OrganizationRolesPage /> },
-          { path: '/organization/roles', element: <OrganizationRolesPage /> },
-          { path: '/organisation/analytics', element: <OrganizationAnalyticsPage /> },
-          { path: '/organization/analytics', element: <OrganizationAnalyticsPage /> },
-          { path: '/organisation/audit-logs', element: <OrganizationAuditLogsPage /> },
-          { path: '/organization/audit-logs', element: <OrganizationAuditLogsPage /> },
-          { path: '/project-activity', element: <Navigate to="/organization/audit-logs" replace /> },
+          // Enterprise Organisation Routes (WEB_3) Guarded by Organization Capability
+          {
+            element: (
+              <CapabilityGuard
+                capability={[
+                  'organization.view',
+                  'organization.members.view',
+                  'organization.teams.view',
+                  'project.view',
+                ]}
+              />
+            ),
+            children: [
+              { path: '/settings/organization', element: <OrganizationProfilePage /> },
+              { path: '/organization/profile', element: <Navigate to="/settings/organization" replace /> },
+              { path: '/organisation/profile', element: <Navigate to="/settings/organization" replace /> },
+              { path: '/account/company', element: <Navigate to="/settings/organization" replace /> },
+              { path: '/account/company-profile', element: <Navigate to="/settings/organization" replace /> },
+              { path: '/settings/team', element: <OrganizationMembersPage /> },
+              { path: '/settings/teams', element: <OrganizationTeamsPage /> },
+              { path: '/settings/members', element: <OrganizationMembersPage /> },
+              { path: '/organisation/members', element: <OrganizationMembersPage /> },
+              { path: '/organization/members', element: <OrganizationMembersPage /> },
+              { path: '/project-members', element: <Navigate to="/organization/members" replace /> },
+              { path: '/organisation/teams', element: <OrganizationTeamsPage /> },
+              { path: '/organization/teams', element: <OrganizationTeamsPage /> },
+              { path: '/internal-teams', element: <Navigate to="/organization/teams" replace /> },
+              { path: '/organisation/projects', element: <OrganizationProjectsPage /> },
+              { path: '/organization/projects', element: <OrganizationProjectsPage /> },
+              { path: '/settings/roles', element: <OrganizationRolesPage /> },
+              { path: '/organisation/roles', element: <OrganizationRolesPage /> },
+              { path: '/organization/roles', element: <OrganizationRolesPage /> },
+              { path: '/organisation/analytics', element: <OrganizationAnalyticsPage /> },
+              { path: '/organization/analytics', element: <OrganizationAnalyticsPage /> },
+              { path: '/organisation/audit-logs', element: <OrganizationAuditLogsPage /> },
+              { path: '/organization/audit-logs', element: <OrganizationAuditLogsPage /> },
+              { path: '/project-activity', element: <Navigate to="/organization/audit-logs" replace /> },
+            ],
+          },
 
           // Partner Portal Route Aliases
           { path: '/portal/dashboard', element: <Navigate to="/dashboard" replace /> },

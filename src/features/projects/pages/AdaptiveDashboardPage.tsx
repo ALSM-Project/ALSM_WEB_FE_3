@@ -1,4 +1,5 @@
 import React from 'react';
+import { useCapabilities } from '@/context/BootstrapContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { ModernizationDashboardPage } from './ModernizationDashboardPage';
 import { ManagedDashboardPage } from '@/features/managed/pages/ManagedDashboardPage';
@@ -6,13 +7,16 @@ import { ManagedDashboardPage } from '@/features/managed/pages/ManagedDashboardP
 /**
  * AdaptiveDashboardPage
  *
- * Dynamically switches the customer dashboard between:
- * - PLATFORM-BASED MODERNIZATION: Developer conversion workspace (Upload, Projects, Screens Analyzed, Quotas, Conversion Modules)
- * - MANAGED MODERNIZATION SERVICES: Turnkey delivery portal (SOW Stages, Team Lead oversight, Milestones, Deliverables)
+ * Big Tech Entitlements + Capabilities:
+ * Dynamically renders the appropriate dashboard based on capabilities:
+ * - can('dashboard.managed') -> ManagedDashboardPage (Turnkey delivery portal, deliverables, signoffs)
+ * - Otherwise -> ModernizationDashboardPage (Self-service developer conversion workspace)
  */
 export const AdaptiveDashboardPage: React.FC = () => {
+  const { can } = useCapabilities();
   const { activeWorkspace, serviceMode } = useWorkspace();
-  const isManaged = activeWorkspace === 'MANAGED' || serviceMode === 'WE_CONVERT_FOR_YOU';
+
+  const isManaged = can('dashboard.managed') || activeWorkspace === 'MANAGED' || serviceMode === 'WE_CONVERT_FOR_YOU';
 
   if (isManaged) {
     return <ManagedDashboardPage />;

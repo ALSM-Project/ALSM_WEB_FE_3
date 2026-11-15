@@ -12,7 +12,7 @@ export const useNavigationQuery = (
     queryFn: () => navigationApi.getNavigation(application, contractType),
     enabled,
     staleTime: 1000 * 60 * 5, // 5 minutes cache to prevent aggressive refetch / layout jumps
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 };

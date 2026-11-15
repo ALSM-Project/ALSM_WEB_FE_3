@@ -28,6 +28,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { sidebarNav, loading } = useNavigation();
   const { isSuspended, isExpired } = useWorkspace();
 
+  const isPermitted = (item: MenuItem): boolean => {
+    if (item.isVisible === false) return false;
+    return true;
+  };
+
   // Dynamically group items into canonical sections without hardcoded items or duplicates
   const sections = useMemo(() => {
     const result: NavSection[] = [];
@@ -47,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     };
 
     for (const item of sidebarNav) {
-      if (item.isVisible === false) continue;
+      if (!isPermitted(item)) continue;
 
       // Top level standalone root item (e.g. Dashboard)
       const isRootStandalone =
@@ -87,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           result.push(existing);
         }
         for (const child of item.children) {
-          if (child.isVisible === false) continue;
+          if (!isPermitted(child)) continue;
           const childPath = child.path?.toLowerCase();
           if (childPath && childPath !== '#' && seenPaths.has(childPath)) {
             continue;
@@ -108,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }
 
         for (const child of item.children) {
-          if (child.isVisible === false) continue;
+          if (!isPermitted(child)) continue;
           const childPath = child.path?.toLowerCase();
           if (childPath && childPath !== '#' && seenPaths.has(childPath)) {
             continue;
@@ -147,9 +152,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       '',
       'ORGANIZATION',
       'CONTRACT & BILLING',
+      'PROJECT MANAGEMENT',
+      'COMMUNICATION',
       'DELIVERABLES',
       'COLLABORATION',
       'ACCOUNT',
+      'RESOURCES',
     ];
 
     const ordered: NavSection[] = [];

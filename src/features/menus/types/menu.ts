@@ -21,6 +21,7 @@ export interface MenuItem {
   parentId?: string;
   category?: 'MAIN' | 'RESOURCES' | 'ACCOUNT' | string;
 
+  capability?: string;
   permissions?: string[];
   isPinnable?: boolean;
   isHidden?: boolean;

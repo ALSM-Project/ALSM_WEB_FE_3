@@ -1,8 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { contractsApi } from '@/features/contracts/api/contracts.api';
+import React, { createContext, useContext, useMemo } from 'react';
 import type { EnterpriseContract } from '@/features/contracts/api/contracts.api';
-import { useAuth } from '@/app/providers';
-import { apiClient } from '@/services/api/apiClient';
+import { useBootstrap } from './BootstrapContext';
 
 export type ServiceMode = 'SELF_SERVICE_CONVERSION' | 'SELF_SERVICE' | 'WE_CONVERT_FOR_YOU' | 'HYBRID';
 export type ActiveWorkspace = 'SELF_SERVICE' | 'MANAGED';
@@ -14,8 +12,8 @@ export interface AuthoritativeContractContext {
   organizationName?: string;
   contractId?: string;
   contractNumber?: string;
-  contractType?: string; // 'SELF_SERVICE' | 'WE_CONVERT_FOR_YOU'
-  serviceMode?: string;  // 'SELF_SERVICE' | 'WE_CONVERT_FOR_YOU'
+  contractType?: string;
+  serviceMode?: string;
   status?: ContractStatus;
   contractStatus?: ContractStatus;
   roles?: string[];
@@ -45,199 +43,101 @@ export interface WorkspaceContextType {
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'alsm_active_workspace';
-
+/**
+ * WorkspaceProvider: Thin adapter over BootstrapContext.
+ * In accordance with Big Tech architecture:
+ * - NO independent contract or workspace fetching; pure bootstrap consumer
+ * - NO hardcoded fallback to SELF_SERVICE
+ * - Derives authoritative serviceMode and workspace directly from single bootstrap payload
+ */
 export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, user } = useAuth();
-  const [activeContract, setActiveContract] = useState<EnterpriseContract | null>(null);
-  const [contractContext, setContractContext] = useState<AuthoritativeContractContext | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    user: bootstrapUser,
+    organization: bootstrapOrg,
+    contract: bootstrapContract,
+    capabilities,
+    isLoading,
+    error,
+    refreshBootstrap,
+  } = useBootstrap();
 
-  const userEmail = user?.email;
-  const [lastUserEmail, setLastUserEmail] = useState<string | undefined>(userEmail);
-
-  // Clear cache when user switches
-  useEffect(() => {
-    if (userEmail && lastUserEmail && userEmail !== lastUserEmail) {
-      localStorage.removeItem(STORAGE_KEY);
-      contractsApi.clearCache();
-      setActiveContract(null);
-      setContractContext(null);
-    }
-    setLastUserEmail(userEmail);
-  }, [userEmail, lastUserEmail]);
-
-  // Initialize workspace from localStorage or default to SELF_SERVICE
-  const [activeWorkspace, setActiveWorkspaceState] = useState<ActiveWorkspace>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved === 'MANAGED' ? 'MANAGED' : 'SELF_SERVICE';
-  });
-
-  const fetchContract = useCallback(async () => {
-    if (!isAuthenticated) {
-      setIsLoading(false);
-      return;
-    }
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // 1. Authoritative Backend Context Call
-      let authoritativeContext: AuthoritativeContractContext | null = null;
-      if (typeof apiClient?.get === 'function') {
-        try {
-          authoritativeContext = await apiClient.get<AuthoritativeContractContext>('/navigation/contract-context');
-          if (authoritativeContext) {
-            setContractContext(authoritativeContext);
-          }
-        } catch (e) {
-          console.warn('Could not fetch authoritative contract context from /navigation/contract-context, using fallback:', e);
-        }
-      }
-
-      // 2. Fallback / complementary detailed contract list call
-      const list = await contractsApi.getContracts();
-      if (list && list.length > 0) {
-        const primary = list[0];
-        setActiveContract(primary);
-      }
-
-      // 3. Resolve Service Mode from authoritative context or fallback contract (Strictly 2 Types: Platform-Based vs Managed)
-      let resolvedMode: ServiceMode = 'SELF_SERVICE';
-      const rawAuthoritative = (authoritativeContext?.serviceMode || authoritativeContext?.contractType || '').toUpperCase();
-      if (rawAuthoritative) {
-        if (rawAuthoritative.includes('CONVERT') || rawAuthoritative.includes('MANAGED')) {
-          resolvedMode = 'WE_CONVERT_FOR_YOU';
-        } else {
-          resolvedMode = 'SELF_SERVICE';
-        }
-      } else if (list && list.length > 0) {
-        const primary = list[0];
-        const rawType = (primary.serviceMode || primary.contractType || '').toUpperCase();
-        if (rawType.includes('MANAGED') || rawType.includes('CONVERT')) {
-          resolvedMode = 'WE_CONVERT_FOR_YOU';
-        } else {
-          resolvedMode = 'SELF_SERVICE';
-        }
-      }
-
-      // 4. Enforce workspace according to resolved mode
-      if (resolvedMode === 'WE_CONVERT_FOR_YOU') {
-        setActiveWorkspaceState('MANAGED');
-        localStorage.setItem(STORAGE_KEY, 'MANAGED');
-      } else {
-        setActiveWorkspaceState('SELF_SERVICE');
-        localStorage.setItem(STORAGE_KEY, 'SELF_SERVICE');
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to load organization contract.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    fetchContract();
-  }, [fetchContract]);
+  const isManaged = bootstrapContract?.serviceMode === 'WE_CONVERT_FOR_YOU';
 
   const serviceMode: ServiceMode = useMemo(() => {
-    const rawContext = (contractContext?.serviceMode || contractContext?.contractType || '').toUpperCase();
-    if (rawContext) {
-      if (rawContext.includes('CONVERT') || rawContext.includes('MANAGED')) return 'WE_CONVERT_FOR_YOU';
-      return 'SELF_SERVICE';
-    }
-    const rawContract = (activeContract?.serviceMode || activeContract?.contractType || '').toUpperCase();
-    if (rawContract) {
-      if (rawContract.includes('CONVERT') || rawContract.includes('MANAGED')) return 'WE_CONVERT_FOR_YOU';
-      return 'SELF_SERVICE';
-    }
-    return activeWorkspace === 'MANAGED' ? 'WE_CONVERT_FOR_YOU' : 'SELF_SERVICE';
-  }, [contractContext, activeContract, activeWorkspace]);
+    if (!bootstrapContract) return 'WE_CONVERT_FOR_YOU';
+    return isManaged ? 'WE_CONVERT_FOR_YOU' : 'SELF_SERVICE';
+  }, [bootstrapContract, isManaged]);
+
+  const activeWorkspace: ActiveWorkspace = useMemo(() => {
+    return isManaged ? 'MANAGED' : 'SELF_SERVICE';
+  }, [isManaged]);
 
   const contractStatus: ContractStatus = useMemo(() => {
-    if (contractContext?.contractStatus) {
-      return contractContext.contractStatus;
-    }
-    if (contractContext?.status) {
-      return contractContext.status;
-    }
-    return (activeContract?.status as ContractStatus) || 'ACTIVE';
-  }, [contractContext, activeContract]);
+    return (bootstrapContract?.status as ContractStatus) || 'ACTIVE';
+  }, [bootstrapContract?.status]);
 
-  const isSuspended = Boolean(contractContext?.isSuspended || contractStatus === 'SUSPENDED');
-  const isExpired = Boolean(contractContext?.isExpired || contractStatus === 'EXPIRED');
+  const isSuspended = bootstrapContract?.status === 'SUSPENDED';
+  const isExpired = bootstrapContract?.status === 'EXPIRED';
 
-  const isHybrid = false;
-  const canUseSelfService = serviceMode === 'SELF_SERVICE';
-  const canUseManaged = serviceMode === 'WE_CONVERT_FOR_YOU';
+  const activeContract: EnterpriseContract | null = useMemo(() => {
+    if (!bootstrapContract) return null;
+    return {
+      id: bootstrapContract.id || bootstrapContract.contractNumber || 'primary',
+      contractNumber: bootstrapContract.contractNumber || '',
+      organizationId: bootstrapOrg?.id || '',
+      serviceMode: bootstrapContract.serviceMode,
+      contractType: bootstrapContract.serviceMode,
+      status: bootstrapContract.status as any,
+      endDate: bootstrapContract.validUntil || undefined,
+    } as any;
+  }, [bootstrapContract, bootstrapOrg]);
 
-  const userRoles = useMemo(() => contractContext?.roles || [], [contractContext]);
-  const userPermissions = useMemo(() => contractContext?.permissions || [], [contractContext]);
+  const userRoles = useMemo(() => {
+    return bootstrapUser?.role ? [bootstrapUser.role] : [];
+  }, [bootstrapUser?.role]);
+
   const organization = useMemo(() => {
-    if (contractContext?.organizationId) {
-      return {
-        id: contractContext.organizationId,
-        name: contractContext.organizationName || 'Acme Modernization Corp',
-      };
-    }
-    return null;
-  }, [contractContext]);
+    if (!bootstrapOrg) return null;
+    return {
+      id: bootstrapOrg.id || undefined,
+      name: bootstrapOrg.name || undefined,
+    };
+  }, [bootstrapOrg]);
 
-  const setActiveWorkspace = useCallback(
-    (mode: ActiveWorkspace) => {
-      // Security enforcement: User cannot switch modes if not granted in contract
-      if (!isHybrid) {
-        if (serviceMode === 'WE_CONVERT_FOR_YOU' && mode === 'SELF_SERVICE') {
-          console.warn('Unauthorized workspace switch attempt blocked by contract policy.');
-          return;
-        }
-        if (serviceMode === 'SELF_SERVICE' && mode === 'MANAGED') {
-          console.warn('Unauthorized workspace switch attempt blocked by contract policy.');
-          return;
-        }
-      }
-
-      setActiveWorkspaceState(mode);
-      localStorage.setItem(STORAGE_KEY, mode);
-    },
-    [isHybrid, serviceMode]
-  );
+  const value: WorkspaceContextType = {
+    activeContract,
+    serviceMode,
+    contractStatus,
+    isSuspended,
+    isExpired,
+    activeWorkspace,
+    setActiveWorkspace: () => {},
+    isHybrid: bootstrapContract?.serviceMode === 'HYBRID',
+    canUseSelfService: !isManaged,
+    canUseManaged: isManaged,
+    userRoles,
+    userPermissions: capabilities,
+    organization,
+    isLoading,
+    error,
+    refreshContract: refreshBootstrap,
+  };
 
   return (
-    <WorkspaceContext.Provider
-      value={{
-        activeContract,
-        serviceMode,
-        contractStatus,
-        isSuspended,
-        isExpired,
-        activeWorkspace,
-        setActiveWorkspace,
-        isHybrid,
-        canUseSelfService,
-        canUseManaged,
-        userRoles,
-        userPermissions,
-        organization,
-        isLoading,
-        error,
-        refreshContract: fetchContract,
-      }}
-    >
+    <WorkspaceContext.Provider value={value}>
       {children}
     </WorkspaceContext.Provider>
   );
 };
 
-export const useOptionalWorkspace = (): WorkspaceContextType | undefined => {
-  return useContext(WorkspaceContext);
-};
-
 export const useWorkspace = (): WorkspaceContextType => {
   const context = useContext(WorkspaceContext);
   if (!context) {
-    throw new Error('useWorkspace must be used within a WorkspaceProvider');
+    throw new Error('useWorkspace must be used within WorkspaceProvider');
   }
   return context;
+};
+
+export const useOptionalWorkspace = (): WorkspaceContextType | null => {
+  return useContext(WorkspaceContext) || null;
 };

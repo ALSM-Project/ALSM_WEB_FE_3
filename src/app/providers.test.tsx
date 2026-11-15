@@ -22,6 +22,34 @@ const mocks = vi.hoisted(() => ({
 
   refreshSession: vi.fn(),
   setAuthFailureHandler: vi.fn(),
+  get: vi.fn().mockImplementation((url: string) => {
+    if (url.includes('/session/bootstrap')) {
+      return Promise.resolve({
+        user: { id: 'usr-1', email: 'alex@example.com', role: 'PARTNER' },
+        organization: { id: 'org-1', name: 'Acme Corp', tier: 'ENTERPRISE', status: 'ACTIVE' },
+        contract: {
+          id: 'ctr-1',
+          contractNumber: 'CTR-001',
+          serviceMode: 'WE_CONVERT_FOR_YOU',
+          status: 'ACTIVE',
+          isReadOnly: false,
+        },
+        capabilities: ['dashboard.view', 'dashboard.managed'],
+        quotas: {
+          screensLimit: 100,
+          screensUsed: 10,
+          storageLimitMb: 1024,
+          storageUsedMb: 100,
+          conversionsMonthlyLimit: 50,
+          conversionsUsed: 5,
+        },
+        featureFlags: {},
+        sourceTimestamp: new Date().toISOString(),
+        navigationTree: [],
+      });
+    }
+    return Promise.resolve({});
+  }),
 }));
 
 vi.mock('@/features/auth/services/auth.service', () => ({
@@ -53,6 +81,7 @@ vi.mock('@/services/api/apiClient', () => ({
   apiClient: {
     refreshSession: mocks.refreshSession,
     setAuthFailureHandler: mocks.setAuthFailureHandler,
+    get: mocks.get,
   },
 }));
 

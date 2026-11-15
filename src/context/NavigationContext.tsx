@@ -9,9 +9,9 @@ import {
   insertItemInTree,
 } from '@/features/menus/utils/navigationTreeUtils';
 import { apiClient } from '@/services/api/apiClient';
-import { tokenStore } from '@/services/api/tokenStore';
 import { useOptionalWorkspace } from './WorkspaceContext';
-import { useNavigationQuery, type BackendNavItem } from '@/features/navigation/hooks/useNavigationQuery';
+import { useBootstrap } from './BootstrapContext';
+import type { BackendNavItem } from '@/features/navigation/api/navigation.api';
 
 export type { BackendNavItem };
 
@@ -388,6 +388,7 @@ function mapBackendNodeToMenuItem(node: BackendNavItem, parentCategory?: string)
     target: node.openInNewTab ? '_blank' : '_self',
     category,
     permissions: node.requiredPermissions,
+    capability: (node as any).capability,
     children:
       node.children && node.children.length > 0
         ? node.children.map((c) => mapBackendNodeToMenuItem(c, category))
@@ -397,19 +398,13 @@ function mapBackendNodeToMenuItem(node: BackendNavItem, parentCategory?: string)
 
 export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const ws = useOptionalWorkspace();
+  const { navigationTree: bootstrapNavTree, refreshBootstrap } = useBootstrap();
   const activeWorkspace: 'MANAGED' | 'SELF_SERVICE' = ws?.activeWorkspace === 'MANAGED' ? 'MANAGED' : 'SELF_SERVICE';
 
   const currentDefaultNav = useMemo(() => {
     return getSidebarNavForMode(activeWorkspace);
   }, [activeWorkspace]);
 
-  const contractType =
-    activeWorkspace === 'MANAGED'
-      ? 'WE_CONVERT_FOR_YOU'
-      : 'SELF_SERVICE';
-
-  const isAuth = !!tokenStore.getAccessToken();
-  const { data: backendNavNodes, isLoading, refetch } = useNavigationQuery('WEB_3', contractType, isAuth);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [sidebarNav, setSidebarNav] = useState<MenuItem[]>(() =>
     mergeDynamicAndStaticNavigation(DEFAULT_SIDEBAR_NAV, currentDefaultNav, activeWorkspace)
@@ -419,18 +414,18 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     if (!isDirty) {
-      if (backendNavNodes && Array.isArray(backendNavNodes) && backendNavNodes.length > 0) {
-        const mapped = backendNavNodes.map((n) => mapBackendNodeToMenuItem(n));
+      if (bootstrapNavTree && Array.isArray(bootstrapNavTree) && bootstrapNavTree.length > 0) {
+        const mapped = bootstrapNavTree.map((n) => mapBackendNodeToMenuItem(n));
         setSidebarNav(mergeDynamicAndStaticNavigation(mapped, currentDefaultNav, activeWorkspace));
       } else {
         setSidebarNav(mergeDynamicAndStaticNavigation([], currentDefaultNav, activeWorkspace));
       }
     }
-  }, [backendNavNodes, isDirty, currentDefaultNav, activeWorkspace]);
+  }, [bootstrapNavTree, isDirty, currentDefaultNav, activeWorkspace]);
 
   const handleRefresh = useCallback(async () => {
-    await refetch();
-  }, [refetch]);
+    await refreshBootstrap();
+  }, [refreshBootstrap]);
 
   const addItem = useCallback((itemData: Partial<MenuItem>, parentId?: string | null): MenuItem => {
     const newId = itemData.id || `menu-${Date.now()}`;
@@ -583,14 +578,14 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setIsSaving(true);
       await apiClient.post('/menus/save', { sidebarNav, application: 'WEB_3' });
       setIsDirty(false);
-      await refetch();
+      await refreshBootstrap();
     } catch (e) {
       console.warn('Backend menu save failed:', e);
       setIsDirty(false);
     } finally {
       setIsSaving(false);
     }
-  }, [sidebarNav, refetch]);
+  }, [sidebarNav, refreshBootstrap]);
 
   const trackMenuItemUsage = useCallback(async (itemId: string) => {
     try {
@@ -625,7 +620,7 @@ export const NavigationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     },
   };
 
-  const isNavLoading = isSaving || (isLoading && (!sidebarNav || sidebarNav.length === 0));
+  const isNavLoading = isSaving || (!sidebarNav || sidebarNav.length === 0);
 
   return (
     <NavigationContext.Provider

@@ -1,8 +1,9 @@
 import { Lock } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, getTargetHandoffUrl, redirectUserToPortal } from '@/app/providers';
 import { useWorkspace } from '@/context/WorkspaceContext';
+import { useBootstrap } from '@/context/BootstrapContext';
 import { tokenStore } from '@/services/api/tokenStore';
 import { ChangePasswordPage } from '@/features/account/pages/ChangePasswordPage';
 import { ROUTES } from '@/shared/constants/routes';
@@ -91,6 +92,54 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles }) => {
         <button 
           onClick={() => navigate(-1)} 
           className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-700 transition-colors"
+        >
+          Go Back
+        </button>
+      </div>
+    );
+  }
+
+  return <Outlet />;
+};
+
+export interface CapabilityGuardProps {
+  capability: string | string[];
+  fallbackRoute?: string;
+}
+
+/**
+ * Big Tech Capability Guard (Salesforce / AWS / Atlassian Entitlements pattern).
+ * Evaluates whether current user + plan + contract possesses the specified capability.
+ */
+export const CapabilityGuard: React.FC<CapabilityGuardProps> = ({ capability, fallbackRoute }) => {
+  const { can, isLoading } = useBootstrap();
+  const navigate = useNavigate();
+
+  const hasCapability = useMemo(() => {
+    if (Array.isArray(capability)) {
+      return capability.some((c) => can(c));
+    }
+    return can(capability);
+  }, [capability, can]);
+
+  if (isLoading) {
+    return <RouteLoading />;
+  }
+
+  if (!hasCapability) {
+    const requiredCaps = Array.isArray(capability) ? capability.join(', ') : capability;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#F7F9FC] p-4 text-center">
+        <div className="text-gray-400 mb-4">
+          <Lock className="w-16 h-16 text-slate-400 mx-auto" aria-hidden="true" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+        <p className="text-gray-600 mb-6 max-w-md">
+          Your organization subscription plan or contract capabilities do not include this feature ({requiredCaps}).
+        </p>
+        <button
+          onClick={() => (fallbackRoute ? navigate(fallbackRoute) : navigate(-1))}
+          className="px-4 py-2 bg-brand-600 text-white rounded hover:bg-brand-700 transition-colors cursor-pointer"
         >
           Go Back
         </button>

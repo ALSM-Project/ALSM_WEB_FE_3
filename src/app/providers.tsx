@@ -23,6 +23,7 @@ export const useOptionalAuth = () => {
 
 import { NavigationProvider } from '@/context/NavigationContext';
 import { WorkspaceProvider } from '@/context/WorkspaceContext';
+import { BootstrapProvider } from '@/context/BootstrapContext';
 
 /**
  * Check if a user is an internal staff, sales, or platform admin.
@@ -284,9 +285,11 @@ export const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children
       {user?.mustChangePassword ? (
         children
       ) : (
-        <WorkspaceProvider>
-          <NavigationProvider>{children}</NavigationProvider>
-        </WorkspaceProvider>
+        <BootstrapProvider>
+          <WorkspaceProvider>
+            <NavigationProvider>{children}</NavigationProvider>
+          </WorkspaceProvider>
+        </BootstrapProvider>
       )}
     </AuthContext.Provider>
   );
