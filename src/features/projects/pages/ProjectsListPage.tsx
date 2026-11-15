@@ -7,6 +7,7 @@ import { CreateProjectModal } from '../components/CreateProjectModal';
 import { EditProjectModal } from '../components/EditProjectModal';
 import { projectService } from '../services/project.service';
 import type { Project } from '../types/project';
+import { useWorkspace } from '@/context/WorkspaceContext';
 
 const LEGACY_TYPE_LABEL: Record<string, string> = {
   BMS_DSPF_TO_REACT: 'BMS / DSPF',
@@ -16,11 +17,14 @@ const LEGACY_TYPE_LABEL: Record<string, string> = {
 const TARGET_FRAMEWORK_LABEL: Record<string, string> = {
   BMS_DSPF_TO_REACT: 'React 19 + TypeScript',
   BMS_DSPF_TO_FRONTEND: 'React 19 + TypeScript',
-  COBOL_TO_JAVA: 'Java 21 + Spring Boot',
+  COBOL_TO_JAVA: 'Java 17 + Spring Boot',
 };
 
 export const ProjectsListPage: React.FC = () => {
   const navigate = useNavigate();
+  const { activeWorkspace, serviceMode } = useWorkspace();
+  const isManaged = activeWorkspace === 'MANAGED' || serviceMode === 'WE_CONVERT_FOR_YOU';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('ALL');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -122,7 +126,13 @@ export const ProjectsListPage: React.FC = () => {
           filteredProjects.map((p) => (
             <div
               key={p.id}
-              onClick={() => navigate(ROUTES.PROJECTS.SCREENS(p.id))}
+              onClick={() => {
+                if (isManaged) {
+                  navigate(`/project-files?projectId=${p.id}`);
+                } else {
+                  navigate(ROUTES.PROJECTS.SCREENS(p.id));
+                }
+              }}
               className="bg-white border border-[#D9E2EC] hover:border-[#244A70] rounded-xl p-6 shadow-2xs hover:shadow-md transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-6 cursor-pointer group"
             >
               <div className="space-y-2 max-w-2xl">
@@ -158,7 +168,11 @@ export const ProjectsListPage: React.FC = () => {
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(ROUTES.PROJECTS.SCREENS(p.id));
+                    if (isManaged) {
+                      navigate(`/project-files?projectId=${p.id}`);
+                    } else {
+                      navigate(ROUTES.PROJECTS.SCREENS(p.id));
+                    }
                   }}
                   className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold space-x-1.5 shadow-2xs"
                 >
@@ -169,7 +183,11 @@ export const ProjectsListPage: React.FC = () => {
                   variant="secondary"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/projects/${p.id}`);
+                    if (isManaged) {
+                      navigate(`/project-files?projectId=${p.id}`);
+                    } else {
+                      navigate(`/projects/${p.id}`);
+                    }
                   }}
                   className="p-2 border border-[#D9E2EC] text-[#42526E] hover:text-[#244A70] hover:bg-[#F0F4F8] hover:border-[#244A70] transition-colors rounded-xl text-xs font-semibold flex items-center gap-1 px-3"
                   title="Project Overview & Modernization Workflow"
@@ -232,12 +250,17 @@ export const ProjectsListPage: React.FC = () => {
 
       {/* Blurred Backdrop Create Project Modal */}
       <CreateProjectModal
-        onProjectCreated={(projectId) => {
-          loadProjects();
-          navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-        }}
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        defaultServiceType={isManaged ? 'MANAGED' : 'SELF_SERVICE'}
+        onProjectCreated={(projectId) => {
+          loadProjects();
+          if (isManaged) {
+            navigate(`/project-files?projectId=${projectId}`);
+          } else {
+            navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+          }
+        }}
       />
 
       <EditProjectModal
