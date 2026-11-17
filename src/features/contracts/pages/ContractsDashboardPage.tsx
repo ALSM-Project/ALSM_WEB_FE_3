@@ -193,8 +193,8 @@ export const ContractsDashboardPage: React.FC = () => {
             onClick={() => navigate('/billing/contracts/new')}
             className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs h-9 cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5 mr-1.5" />
-            Create Contract
+            <Plus className="w-3.5 h-3.5 shrink-0" />
+            <span>Create Contract</span>
           </Button>
         </div>
       </div>
@@ -291,13 +291,13 @@ export const ContractsDashboardPage: React.FC = () => {
         {/* Filters and Search Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
           <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
-            <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search contract number, title, customer..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:bg-white transition-all"
+              className="w-full h-8 pl-8 pr-3 py-0 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] placeholder:text-[#64748B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:bg-white transition-all"
             />
           </form>
 
@@ -309,7 +309,7 @@ export const ContractsDashboardPage: React.FC = () => {
             <select
               value={serviceFilter}
               onChange={(e) => setServiceFilter(e.target.value)}
-              className="text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg px-2.5 py-1.5 text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
+              className="h-8 px-2.5 py-0 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
             >
               <option value="ALL">All Service Modes</option>
               <option value="SELF_SERVICE">Platform-Based Modernization</option>
@@ -575,8 +575,8 @@ export const ContractsDashboardPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <PenTool className="w-3.5 h-3.5 mr-1" />
-                    Confirm Digital Signature
+                    <PenTool className="w-3.5 h-3.5 shrink-0" />
+                    <span>Confirm Digital Signature</span>
                   </>
                 )}
               </Button>
