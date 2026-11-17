@@ -154,13 +154,13 @@ export const ConversionRequestsListPage: React.FC = () => {
         {/* Search input */}
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search request ID, project name, or contact..."
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#2563EB]"
+              className="w-full h-8 pl-9 pr-3 py-0 text-xs bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:bg-white focus:border-[#2563EB]"
             />
           </div>
           <button
