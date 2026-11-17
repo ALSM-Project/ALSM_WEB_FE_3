@@ -558,14 +558,14 @@ export const MeetingsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Search Input */}
           <div className="relative">
-            <Search className="w-4 h-4 text-[#6B778C] absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-[#6B778C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0" />
             <input
               type="text"
               placeholder="Search meetings by title, project, host..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchMeetings()}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
+              className="w-full h-8 pl-9 pr-3 py-0 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
             />
           </div>
 
@@ -574,7 +574,7 @@ export const MeetingsPage: React.FC = () => {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
+              className="w-full h-8 px-3 py-0 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
             >
               <option value="ALL">All Meeting Types</option>
               {consultationTypes.map((t) => (
@@ -590,7 +590,7 @@ export const MeetingsPage: React.FC = () => {
             <select
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
+              className="w-full h-8 px-3 py-0 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
             >
               <option value="ALL">All Related Projects</option>
               {projects.map((p) => (
@@ -606,7 +606,7 @@ export const MeetingsPage: React.FC = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="w-full px-3 py-2 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
+              className="w-full h-8 px-3 py-0 text-xs bg-[#F8FAFC] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
             >
               <option value="newest">Newest Created</option>
               <option value="upcoming">Upcoming Schedule Date</option>
@@ -803,9 +803,9 @@ export const MeetingsPage: React.FC = () => {
                             onClick={() => window.open(meeting.scheduling.meetingUrl, '_blank', 'noopener,noreferrer')}
                             className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold rounded-lg shadow-xs transition-colors cursor-pointer"
                           >
-                            <Video className="w-3.5 h-3.5" />
+                            <Video className="w-3.5 h-3.5 shrink-0" />
                             <span>Join Google Meet</span>
-                            <ExternalLink className="w-3 h-3 ml-0.5" />
+                            <ExternalLink className="w-3 h-3 shrink-0" />
                           </button>
                         )}
                       </>

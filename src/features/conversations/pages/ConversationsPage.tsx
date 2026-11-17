@@ -360,14 +360,14 @@ export const ConversationsPage: React.FC = () => {
           {/* Search & Filters */}
           <div className="p-3.5 border-b border-[#D9E2EC] bg-white space-y-2.5">
             <div className="relative">
-              <Search className="w-4 h-4 text-[#6B778C] absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[#6B778C] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0" />
               <input
                 type="text"
                 placeholder="Search conversations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchConversations()}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-[#F4F6F8] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
+                className="w-full h-8 pl-9 pr-3 py-0 text-xs bg-[#F4F6F8] border border-[#DFE3E8] rounded-lg focus:outline-none focus:border-[#0652CC] text-[#091E42]"
               />
             </div>
 
