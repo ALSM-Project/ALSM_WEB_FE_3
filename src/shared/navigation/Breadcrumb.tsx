@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
-import { useNavigation } from '@/hooks/useNavigation';
+import { useOptionalNavigationContext } from '@/context/NavigationContext';
 import { getBreadcrumbsFromRoute } from './breadcrumbUtils';
 import type { BreadcrumbNode } from './breadcrumbUtils';
 
@@ -13,9 +13,11 @@ export interface BreadcrumbProps {
 
 export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items: propItems, customItems, className = '' }) => {
   const location = useLocation();
-  const { navigation } = useNavigation();
+  const navCtx = useOptionalNavigationContext();
 
-  const menuItems = navigation?.sidebarNav || [];
+  const menuItems = (navCtx?.sidebarNav && navCtx.sidebarNav.length > 0)
+    ? navCtx.sidebarNav
+    : (navCtx?.navigation?.sidebarNav || []);
   const rawItems = customItems || propItems || getBreadcrumbsFromRoute(location.pathname, menuItems);
   const items = rawItems.map((item) => ({
     ...item,

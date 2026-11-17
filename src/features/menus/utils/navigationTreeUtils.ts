@@ -118,13 +118,34 @@ export const SELF_SERVICE_SIDEBAR_NAV: MenuItem[] = [
     category: '',
   },
 
+  // WORKSPACE SECTION
+  {
+    id: 'web3_group_workspace',
+    label: 'WORKSPACE',
+    icon: 'FolderKanban',
+    isVisible: true,
+    order: 2,
+    category: 'WORKSPACE',
+    children: [
+      {
+        id: 'web3_projects',
+        label: 'Projects',
+        icon: 'FolderKanban',
+        path: '/projects',
+        parentId: 'web3_group_workspace',
+        isVisible: true,
+        order: 1,
+      },
+    ],
+  },
+
   // ORGANIZATION SECTION
   {
     id: 'web3_group_organization',
     label: 'ORGANIZATION',
     icon: 'Building2',
     isVisible: true,
-    order: 2,
+    order: 3,
     category: 'ORGANIZATION',
     children: [
       {
@@ -146,31 +167,13 @@ export const SELF_SERVICE_SIDEBAR_NAV: MenuItem[] = [
         order: 2,
       },
       {
-        id: 'web3_org_teams',
-        label: 'Internal Teams',
-        icon: 'Users',
-        path: '/organization/teams',
-        parentId: 'web3_group_organization',
-        isVisible: true,
-        order: 3,
-      },
-      {
-        id: 'web3_org_projects',
-        label: 'Organization Projects',
-        icon: 'Layers',
-        path: '/projects',
-        parentId: 'web3_group_organization',
-        isVisible: true,
-        order: 4,
-      },
-      {
         id: 'web3_org_roles',
         label: 'Roles & Permissions',
         icon: 'Shield',
         path: '/settings/roles',
         parentId: 'web3_group_organization',
         isVisible: true,
-        order: 5,
+        order: 3,
       },
       {
         id: 'web3_org_analytics',
@@ -179,7 +182,7 @@ export const SELF_SERVICE_SIDEBAR_NAV: MenuItem[] = [
         path: '/organization/analytics',
         parentId: 'web3_group_organization',
         isVisible: true,
-        order: 6,
+        order: 4,
       },
     ],
   },
@@ -190,7 +193,7 @@ export const SELF_SERVICE_SIDEBAR_NAV: MenuItem[] = [
     label: 'CONTRACT & BILLING',
     icon: 'FileText',
     isVisible: true,
-    order: 3,
+    order: 4,
     category: 'CONTRACT & BILLING',
     children: [
       {
@@ -223,23 +226,32 @@ export const SELF_SERVICE_SIDEBAR_NAV: MenuItem[] = [
     ],
   },
 
-  // COLLABORATION SECTION
+  // COMMUNICATION SECTION
   {
-    id: 'web3_group_collaboration',
-    label: 'COLLABORATION',
-    icon: 'Calendar',
+    id: 'web3_group_communication',
+    label: 'COMMUNICATION',
+    icon: 'MessageSquare',
     isVisible: true,
-    order: 4,
-    category: 'COLLABORATION',
+    order: 5,
+    category: 'COMMUNICATION',
     children: [
       {
-        id: 'meetings',
-        label: 'Meeting Scheduler',
-        icon: 'Calendar',
-        path: '/meetings',
-        parentId: 'web3_group_collaboration',
+        id: 'conversations',
+        label: 'Conversations',
+        icon: 'MessageSquare',
+        path: '/conversations',
+        parentId: 'web3_group_communication',
         isVisible: true,
         order: 1,
+      },
+      {
+        id: 'meetings',
+        label: 'Meeting Requests',
+        icon: 'Calendar',
+        path: '/meetings',
+        parentId: 'web3_group_communication',
+        isVisible: true,
+        order: 2,
       },
     ],
   },
@@ -345,22 +357,13 @@ export const MANAGED_SIDEBAR_NAV: MenuItem[] = [
         order: 1,
       },
       {
-        id: 'web3_org_teams',
-        label: 'Internal Teams',
+        id: 'web3_org_members',
+        label: 'Team Management',
         icon: 'Users',
-        path: '/organization/teams',
+        path: '/settings/team',
         parentId: 'web3_group_organization',
         isVisible: true,
         order: 2,
-      },
-      {
-        id: 'web3_org_projects',
-        label: 'Organization Projects',
-        icon: 'Layers',
-        path: '/projects',
-        parentId: 'web3_group_organization',
-        isVisible: true,
-        order: 3,
       },
       {
         id: 'web3_org_roles',
@@ -369,7 +372,7 @@ export const MANAGED_SIDEBAR_NAV: MenuItem[] = [
         path: '/settings/roles',
         parentId: 'web3_group_organization',
         isVisible: true,
-        order: 4,
+        order: 3,
       },
       {
         id: 'web3_org_analytics',
@@ -378,7 +381,7 @@ export const MANAGED_SIDEBAR_NAV: MenuItem[] = [
         path: '/organization/analytics',
         parentId: 'web3_group_organization',
         isVisible: true,
-        order: 5,
+        order: 4,
       },
     ],
   },

@@ -47,7 +47,7 @@ export const ConvertScreenPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [projectLoading, setProjectLoading] = useState(true);
+  const [, setProjectLoading] = useState(true);
   const [screen, setScreen] = useState<LegacyScreen | null>(null);
   const [activeTab, setActiveTab] = useState('preview');
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
@@ -89,13 +89,13 @@ export const ConvertScreenPage: React.FC = () => {
   const isCobolProject = project?.conversionType === 'COBOL_TO_JAVA' || resolveWorkspace(project?.conversionType) === 'PROGRAMS';
   const isCobol = isCobolProject || screen?.sourceType === 'COBOL' || Boolean(screen?.name?.toLowerCase().endsWith('.cbl'));
 
-  // Safety redirect: If the user navigated to /convert with fallback 'SCREEN'/'Screen' in a COBOL project,
-  // immediately direct them back to the Programs Workspace rather than displaying an invalid BMS/React state.
+  // Safety redirect: If the user navigated to /convert with fallback 'SCREEN'/'Screen',
+  // immediately direct them back to the Workspace rather than displaying an invalid state.
   useEffect(() => {
-    if (!projectLoading && isCobol && (screenId.toLowerCase() === 'screen' || !screenId)) {
+    if (screenId.toLowerCase() === 'screen' || !screenId) {
       navigate(ROUTES.PROJECTS.SCREENS(projectId), { replace: true });
     }
-  }, [projectLoading, isCobol, screenId, projectId, navigate]);
+  }, [screenId, projectId, navigate]);
 
   useEffect(() => {
     // Wait until the screen's real sourceType is known — fetching before then would guess

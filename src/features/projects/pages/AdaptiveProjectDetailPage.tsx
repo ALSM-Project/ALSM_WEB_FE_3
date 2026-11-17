@@ -17,9 +17,8 @@ export const AdaptiveProjectDetailPage: React.FC = () => {
   const { activeWorkspace, serviceMode } = useWorkspace();
 
   const isManaged =
-    can('deliverable.view') ||
-    activeWorkspace === 'MANAGED' ||
-    serviceMode === 'WE_CONVERT_FOR_YOU';
+    serviceMode === 'WE_CONVERT_FOR_YOU' ||
+    (activeWorkspace === 'MANAGED' && can('deliverable.view') && !can('screen.convert'));
 
   if (isManaged) {
     return <ManagedProjectDetailPage />;

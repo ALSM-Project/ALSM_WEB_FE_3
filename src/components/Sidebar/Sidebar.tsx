@@ -48,6 +48,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ) {
         return 'CONTRACT & BILLING';
       }
+      if (upper === 'COLLABORATION') {
+        return 'COMMUNICATION';
+      }
       return upper;
     };
 
@@ -150,12 +153,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // Canonical ordering of sections
     const canonicalOrder = [
       '',
+      'WORKSPACE',
       'ORGANIZATION',
       'CONTRACT & BILLING',
-      'PROJECT MANAGEMENT',
       'COMMUNICATION',
+      'PROJECT MANAGEMENT',
       'DELIVERABLES',
-      'COLLABORATION',
       'ACCOUNT',
       'RESOURCES',
     ];

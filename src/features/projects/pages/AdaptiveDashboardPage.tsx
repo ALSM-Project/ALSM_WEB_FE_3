@@ -16,7 +16,9 @@ export const AdaptiveDashboardPage: React.FC = () => {
   const { can } = useCapabilities();
   const { activeWorkspace, serviceMode } = useWorkspace();
 
-  const isManaged = can('dashboard.managed') || activeWorkspace === 'MANAGED' || serviceMode === 'WE_CONVERT_FOR_YOU';
+  const isManaged =
+    serviceMode === 'WE_CONVERT_FOR_YOU' ||
+    (activeWorkspace === 'MANAGED' && can('dashboard.managed') && !can('screen.convert'));
 
   if (isManaged) {
     return <ManagedDashboardPage />;
