@@ -489,7 +489,7 @@ export const ConvertScreenPage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-bold text-slate-900 font-mono">{screenName}</h1>
             <span className="bg-brand-50 text-brand-700 border border-brand-200 text-xs px-2.5 py-0.5 rounded-full font-semibold">
-              {isCobol ? 'Target: Java 21 + Spring Boot' : `Target: ${screen?.framework ?? 'React'} TypeScript`}
+              {isCobol ? 'Target: Java 17 + Spring Boot' : `Target: ${screen?.framework ?? 'React'} TypeScript`}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
