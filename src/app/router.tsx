@@ -50,7 +50,6 @@ import { ConversationsPage } from '@/features/conversations';
 import {
   OrganizationProfilePage,
   OrganizationMembersPage,
-  OrganizationTeamsPage,
   OrganizationProjectsPage,
   OrganizationRolesPage,
   OrganizationAnalyticsPage,
@@ -224,7 +223,6 @@ export const router = createBrowserRouter([
                 capability={[
                   'organization.view',
                   'organization.members.view',
-                  'organization.teams.view',
                   'project.view',
                 ]}
               />
@@ -236,14 +234,14 @@ export const router = createBrowserRouter([
               { path: '/account/company', element: <Navigate to="/settings/organization" replace /> },
               { path: '/account/company-profile', element: <Navigate to="/settings/organization" replace /> },
               { path: '/settings/team', element: <OrganizationMembersPage /> },
-              { path: '/settings/teams', element: <OrganizationTeamsPage /> },
+              { path: '/settings/teams', element: <Navigate to="/settings/team" replace /> },
               { path: '/settings/members', element: <OrganizationMembersPage /> },
               { path: '/organisation/members', element: <OrganizationMembersPage /> },
               { path: '/organization/members', element: <OrganizationMembersPage /> },
               { path: '/project-members', element: <Navigate to="/organization/members" replace /> },
-              { path: '/organisation/teams', element: <OrganizationTeamsPage /> },
-              { path: '/organization/teams', element: <OrganizationTeamsPage /> },
-              { path: '/internal-teams', element: <Navigate to="/organization/teams" replace /> },
+              { path: '/organisation/teams', element: <Navigate to="/settings/team" replace /> },
+              { path: '/organization/teams', element: <Navigate to="/settings/team" replace /> },
+              { path: '/internal-teams', element: <Navigate to="/settings/team" replace /> },
               { path: '/organisation/projects', element: <OrganizationProjectsPage /> },
               { path: '/organization/projects', element: <OrganizationProjectsPage /> },
               { path: '/settings/roles', element: <OrganizationRolesPage /> },

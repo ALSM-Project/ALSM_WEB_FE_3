@@ -657,3 +657,7 @@ export const useNavigationContext = (): NavigationContextType => {
   }
   return context;
 };
+
+export const useOptionalNavigationContext = (): NavigationContextType | undefined => {
+  return useContext(NavigationContext);
+};

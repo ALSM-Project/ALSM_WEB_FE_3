@@ -28,6 +28,18 @@ export const AppLayoutContent: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Contract Theme Adaptation:
+  // - Contract 1 (PLATFORM-BASED MODERNIZATION / SELF_SERVICE): Clean pure white background (#FFFFFF)
+  // - Contract 2 (MANAGED MODERNIZATION SERVICES / WE_CONVERT_FOR_YOU): Web 2 corporate background (#F8FAFC)
+  const isManaged = activeWorkspace === 'MANAGED' || serviceMode === 'WE_CONVERT_FOR_YOU';
+  const appBgColor = isManaged ? '#F8FAFC' : '#FFFFFF';
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--alsm-bg', appBgColor);
+    document.documentElement.style.setProperty('--web1-bg-main', appBgColor);
+    document.body.style.backgroundColor = appBgColor;
+  }, [appBgColor]);
+
   // ─── Enterprise status detection ──────────────────────────
   const [isEnterprise, setIsEnterprise] = useState(false);
   const [isEnterpriseSuspended, setIsEnterpriseSuspended] = useState(false);
@@ -89,9 +101,11 @@ export const AppLayoutContent: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen flex font-sans transition-colors bg-[#F8FAFC]"
+      className={`min-h-screen flex font-sans transition-colors ${
+        isManaged ? 'bg-[#F8FAFC]' : 'bg-white'
+      }`}
       style={{
-        backgroundColor: '#F8FAFC',
+        backgroundColor: appBgColor,
         color: '#0F172A',
         '--sidebar-width': sidebarCollapsed ? '4rem' : '15rem',
         '--app-header-height': '64px',
@@ -122,13 +136,13 @@ export const AppLayoutContent: React.FC = () => {
             {/* Mode Badge (Strictly 2 Types: Platform-Based vs Managed Services) */}
             <div className="hidden sm:flex items-center ml-2 border-l border-[#E2E8F0] pl-3">
               {activeWorkspace === 'MANAGED' || serviceMode === 'WE_CONVERT_FOR_YOU' ? (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                  <Building2 className="w-3.5 h-3.5" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#EEF1F6] text-[#244A70] border border-[#DCE3EC]">
+                  <Building2 className="w-3.5 h-3.5 text-[#244A70]" />
                   <span>MANAGED MODERNIZATION SERVICES</span>
                 </div>
               ) : (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
-                  <Zap className="w-3.5 h-3.5" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#EEF1F6] text-[#244A70] border border-[#DCE3EC]">
+                  <Zap className="w-3.5 h-3.5 text-[#244A70]" />
                   <span>PLATFORM-BASED MODERNIZATION</span>
                 </div>
               )}
@@ -279,7 +293,14 @@ export const AppLayoutContent: React.FC = () => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 w-full min-w-0 p-6 lg:p-8">
+        <main
+          className={`flex-1 w-full min-w-0 p-6 lg:p-8 transition-colors ${
+            isManaged ? 'bg-[#F8FAFC]' : 'bg-white'
+          }`}
+          style={{
+            backgroundColor: appBgColor,
+          }}
+        >
           <Outlet />
         </main>
       </div>

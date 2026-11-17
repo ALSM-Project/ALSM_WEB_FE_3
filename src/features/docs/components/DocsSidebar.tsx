@@ -37,22 +37,22 @@ export const DocsSidebar: React.FC<DocsSidebarProps> = ({
     >
       {/* Search Filter Header */}
       <div className="relative mb-3 shrink-0">
-        <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
+        <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0" />
         <input
           type="text"
           value={filterQuery}
           onChange={(e) => setFilterQuery(e.target.value)}
           placeholder="Filter documentation..."
-          className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-500 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+          className="w-full h-8 pl-9 pr-8 py-0 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 placeholder:text-slate-500 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
         />
         {hasFilter && (
           <button
             type="button"
             onClick={() => setFilterQuery('')}
-            className="absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-800 p-0.5 rounded"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800 p-0.5 rounded cursor-pointer"
             title="Clear search"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-3.5 h-3.5 shrink-0" />
           </button>
         )}
       </div>

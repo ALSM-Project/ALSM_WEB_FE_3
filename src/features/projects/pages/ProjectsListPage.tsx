@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Layers, ArrowRight, FolderKanban, Trash2, Pencil, FolderUp } from 'lucide-react';
+import { Plus, Search, Filter, Layers, ArrowRight, FolderKanban, Trash2, Pencil } from 'lucide-react';
 import { ROUTES } from '@/shared/constants/routes';
 import { StatusBadge, Button, PageHeader } from '@/shared/ui';
 import { CreateProjectModal } from '../components/CreateProjectModal';
@@ -74,13 +74,13 @@ export const ProjectsListPage: React.FC = () => {
       {/* Filters and Search Bar */}
       <div className="bg-white border border-[#D9E2EC] rounded-xl p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none shrink-0" />
           <input
             type="text"
             placeholder="Search projects by name, legacy system type..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#F7F9FC] border border-[#D9E2EC] rounded-xl pl-10 pr-4 py-2 text-xs text-[#091E42] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#244A70] transition-colors"
+            className="w-full h-8 pl-10 pr-4 py-0 bg-[#F7F9FC] border border-[#D9E2EC] rounded-xl text-xs text-[#091E42] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#244A70] transition-colors"
           />
         </div>
 
@@ -122,7 +122,7 @@ export const ProjectsListPage: React.FC = () => {
           filteredProjects.map((p) => (
             <div
               key={p.id}
-              onClick={() => navigate(`/project-files?projectId=${p.id}`)}
+              onClick={() => navigate(ROUTES.PROJECTS.SCREENS(p.id))}
               className="bg-white border border-[#D9E2EC] hover:border-[#244A70] rounded-xl p-6 shadow-2xs hover:shadow-md transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-6 cursor-pointer group"
             >
               <div className="space-y-2 max-w-2xl">
@@ -158,12 +158,12 @@ export const ProjectsListPage: React.FC = () => {
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/project-files?projectId=${p.id}`);
+                    navigate(ROUTES.PROJECTS.SCREENS(p.id));
                   }}
                   className="bg-[#244A70] hover:bg-[#1B3856] text-white text-xs font-bold space-x-1.5 shadow-2xs"
                 >
-                  <FolderUp className="w-4 h-4" />
-                  <span>Project Files</span>
+                  <span>Open Workspace</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Button>
                 <Button
                   variant="secondary"
@@ -172,7 +172,7 @@ export const ProjectsListPage: React.FC = () => {
                     navigate(`/projects/${p.id}`);
                   }}
                   className="p-2 border border-[#D9E2EC] text-[#42526E] hover:text-[#244A70] hover:bg-[#F0F4F8] hover:border-[#244A70] transition-colors rounded-xl text-xs font-semibold flex items-center gap-1 px-3"
-                  title="Project Overview & SLA"
+                  title="Project Overview & Modernization Workflow"
                 >
                   <span>Details</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -234,7 +234,7 @@ export const ProjectsListPage: React.FC = () => {
       <CreateProjectModal
         onProjectCreated={(projectId) => {
           loadProjects();
-          navigate(`/project-files?projectId=${projectId}`);
+          navigate(ROUTES.PROJECTS.UPLOAD(projectId));
         }}
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

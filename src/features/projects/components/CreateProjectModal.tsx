@@ -7,6 +7,7 @@ import { projectService } from '../services/project.service';
 import { projectKeys } from '../queries/projectKeys';
 import type { ConversionType } from '../types/project';
 import { ApiError } from '@/services/api/apiError';
+import { ROUTES } from '@/shared/constants/routes';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
 
@@ -21,7 +22,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   isOpen,
   onClose,
   onProjectCreated,
-  defaultServiceType = 'MANAGED',
+  defaultServiceType = 'SELF_SERVICE',
 }) => {
   const queryClient = useContext(QueryClientContext);
   const navigate = useNavigate();
@@ -79,7 +80,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       if (onProjectCreated) {
         onProjectCreated(proj.id);
       } else {
-        navigate(`/project-files?projectId=${proj.id}`);
+        navigate(ROUTES.PROJECTS.UPLOAD(proj.id));
       }
     } catch (err: unknown) {
       setError(extractApiErrorMessage(err, 'Failed to create project. Please try again.'));

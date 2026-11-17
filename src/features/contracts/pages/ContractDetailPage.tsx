@@ -410,8 +410,8 @@ export const ContractDetailPage: React.FC = () => {
                 onClick={() => setActiveTab('overview')}
                 className="text-xs bg-[#244A70] hover:bg-[#1B3856] text-white font-bold"
               >
-                <PenTool className="w-3.5 h-3.5 mr-1" />
-                {isCustomerSigned ? 'View Signature & Billing' : 'Proceed to Mouse E-Signing'}
+                <PenTool className="w-3.5 h-3.5 shrink-0" />
+                <span>{isCustomerSigned ? 'View Signature & Billing' : 'Proceed to Mouse E-Signing'}</span>
               </Button>
             </div>
           </div>

@@ -64,7 +64,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const isManaged = bootstrapContract?.serviceMode === 'WE_CONVERT_FOR_YOU';
 
   const serviceMode: ServiceMode = useMemo(() => {
-    if (!bootstrapContract) return 'WE_CONVERT_FOR_YOU';
+    if (!bootstrapContract) return 'SELF_SERVICE';
     return isManaged ? 'WE_CONVERT_FOR_YOU' : 'SELF_SERVICE';
   }, [bootstrapContract, isManaged]);
 

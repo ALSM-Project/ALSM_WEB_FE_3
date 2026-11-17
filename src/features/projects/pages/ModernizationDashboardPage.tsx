@@ -177,7 +177,7 @@ export const ModernizationDashboardPage: React.FC = () => {
               onClick={() => setIsCreateModalOpen(true)}
               className="bg-[#244A70] hover:bg-[#1B3856] text-white text-sm font-semibold h-10 px-5 rounded-lg shadow-xs cursor-pointer"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 shrink-0" />
               <span>Create Project</span>
             </Button>
           </div>

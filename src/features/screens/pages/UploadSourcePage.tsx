@@ -247,12 +247,18 @@ export const UploadSourcePage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#E2E8F0] pb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#0F172A]">
-            {isDirectFilesPage ? 'Project Files' : 'Upload Source File'}
+            {isDirectFilesPage
+              ? 'Project Files'
+              : isProgramProject
+              ? 'Upload COBOL Source Files'
+              : 'Upload Screen Maps'}
           </h1>
           <p className="text-xs text-[#64748B] mt-1 max-w-2xl">
             {isDirectFilesPage
               ? 'Manage legacy source files (BMS, DSPF, COBOL, RPG), specifications, and documents by project.'
-              : `Add legacy ${activeTab === 'screens' ? 'BMS/DSPF screen map' : 'COBOL/RPG program source'} files to start modernization pipeline.`}
+              : isProgramProject
+              ? 'Upload COBOL programs, copybooks, and related application files to start the Java modernization pipeline.'
+              : 'Add legacy BMS/DSPF screen map files to start modernization pipeline.'}
           </p>
         </div>
 
@@ -276,7 +282,7 @@ export const UploadSourcePage: React.FC = () => {
 
           <Button
             onClick={() => navigate(ROUTES.PROJECTS.SCREENS(activeProjectId))}
-            className="bg-[#0652CC] hover:bg-[#0655FF] text-white space-x-1.5 text-xs font-bold shadow-xs cursor-pointer"
+            className="bg-[#244A70] hover:bg-[#1B3856] text-white space-x-1.5 text-xs font-bold shadow-xs cursor-pointer"
           >
             <span>Proceed to {activeTab === 'screens' ? 'Screens List' : 'Programs List'}</span>
             <ArrowRight className="w-4 h-4" />
@@ -286,14 +292,25 @@ export const UploadSourcePage: React.FC = () => {
 
       {/* Modernization Step-by-Step Workflow Bar */}
       <ModernizationWorkflow
+        workflowType={isProgramProject ? 'COBOL_TO_JAVA' : 'SCREENS'}
         currentStep="upload"
         completedSteps={[]}
         onStepClick={(stepId) => {
-          const firstScreenId = screenFiles[0]?.screenId || screenFiles[0]?.id || 'Screen';
-          if (stepId === 'conversion') navigate(ROUTES.PROJECTS.SCREENS(activeProjectId));
-          if (stepId === 'validation') navigate(ROUTES.PROJECTS.REVIEW(activeProjectId, firstScreenId));
-          if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(activeProjectId, firstScreenId));
-          if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(activeProjectId));
+          if (isProgramProject) {
+            if (stepId === 'analyze' || stepId === 'convert' || stepId === 'validate') {
+              navigate(ROUTES.PROJECTS.SCREENS(activeProjectId));
+            } else if (stepId === 'review' || stepId === 'result') {
+              navigate(ROUTES.PROJECTS.REVIEW(activeProjectId, programFiles[0]?.screenId || '1'));
+            } else if (stepId === 'export') {
+              navigate(ROUTES.PROJECTS.EXPORT(activeProjectId));
+            }
+          } else {
+            const firstScreenId = screenFiles[0]?.screenId || screenFiles[0]?.id || '1';
+            if (stepId === 'conversion' || stepId === 'convert') navigate(ROUTES.PROJECTS.SCREENS(activeProjectId));
+            if (stepId === 'validation' || stepId === 'validate') navigate(ROUTES.PROJECTS.REVIEW(activeProjectId, firstScreenId));
+            if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(activeProjectId, firstScreenId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(activeProjectId));
+          }
         }}
       />
 

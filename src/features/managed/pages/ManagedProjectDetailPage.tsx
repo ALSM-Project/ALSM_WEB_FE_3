@@ -351,13 +351,13 @@ export const ManagedProjectDetailPage: React.FC = () => {
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-2xs space-y-4">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="relative flex-1 w-full">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none shrink-0" />
                 <input
                   type="text"
                   placeholder={`Search ${isCobolProject ? 'programs' : 'screens'} by name...`}
                   value={searchScreen}
                   onChange={(e) => setSearchScreen(e.target.value)}
-                  className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl pl-9 pr-4 py-2 text-xs text-[#0F172A] placeholder-slate-400 focus:outline-none focus:border-[#2563EB]"
+                  className="w-full h-8 pl-10 pr-4 py-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs text-[#0F172A] placeholder-slate-400 focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
