@@ -219,7 +219,7 @@ export const ManagedProjectDetailPage: React.FC = () => {
           <p className="text-xs text-[#64748B] mt-0.5 max-w-2xl">
             {project.description ||
               (isCobolProject
-                ? 'Full-cycle enterprise legacy COBOL to Java 21 + Spring Boot 3 modernization supervised by ALSM engineers.'
+                ? 'Full-cycle enterprise legacy COBOL to Java 17 + Spring Boot 3 modernization supervised by ALSM engineers.'
                 : 'Turnkey enterprise legacy BMS/DSPF to modern React 19 modernization governed by ALSM deterministic engine.')}
           </p>
         </div>
@@ -531,7 +531,7 @@ export const ManagedProjectDetailPage: React.FC = () => {
                 <div className="flex justify-between py-1.5 border-b border-[#F1F5F9]">
                   <span className="text-[#64748B]">Target Architecture:</span>
                   <strong className="text-[#2563EB]">
-                    {isCobolProject ? 'Spring Boot 3 + Java 21' : 'React 19 + TypeScript & Tailwind'}
+                    {isCobolProject ? 'Spring Boot 3 + Java 17' : 'React 19 + TypeScript & Tailwind'}
                   </strong>
                 </div>
                 <div className="flex justify-between py-1.5 border-b border-[#F1F5F9]">

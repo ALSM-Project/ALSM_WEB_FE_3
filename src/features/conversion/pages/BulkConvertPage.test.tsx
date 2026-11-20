@@ -109,7 +109,7 @@ describe('BulkConvertPage', () => {
     expect(startButton).toBeDisabled();
   });
 
-  it('displays Java 21 + Spring Boot target when project is COBOL_TO_JAVA', async () => {
+  it('displays Java 17 + Spring Boot target when project is COBOL_TO_JAVA', async () => {
     mocks.getProjectById.mockResolvedValue({
       id: 'proj-acme',
       name: 'Batch Banking Core',
@@ -122,7 +122,7 @@ describe('BulkConvertPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText('Java 21 + Spring Boot')).toBeInTheDocument();
+    expect(await screen.findByText('Java 17 + Spring Boot')).toBeInTheDocument();
     expect(screen.getByText('ALSM tool2java Pipeline')).toBeInTheDocument();
   });
 });

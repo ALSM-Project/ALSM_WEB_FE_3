@@ -482,7 +482,7 @@ export const SubmitConversionRequestPage: React.FC = () => {
                     className="w-full px-3 py-2 text-xs bg-white border border-[#CBD5E1] rounded-lg text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
                   >
                     <option value="BMS_DSPF_TO_FRONTEND">IBM BMS / DSPF to React 19 + Tailwind CSS</option>
-                    <option value="COBOL_TO_JAVA">Micro Focus / IBM COBOL to Java 21 Spring Boot</option>
+                    <option value="COBOL_TO_JAVA">Micro Focus / IBM COBOL to Java 17 Spring Boot</option>
                     <option value="RPG_TO_FRONTEND">AS/400 RPG / DDS to Modern Web</option>
                   </select>
                 </div>

@@ -27,7 +27,7 @@ const JAVA_IDENTIFIER_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 /**
  * Report 3 Section 3.5.7 & UC-34: Method & Class Mapping Studio.
  * Allows architects and engineers to inspect and refine mappings between legacy
- * COBOL PROCEDURE DIVISION paragraphs/sections and modernized Java 21 Spring Boot
+ * COBOL PROCEDURE DIVISION paragraphs/sections and modernized Java 17 Spring Boot
  * service routines, DTO contracts, and repository interfaces.
  */
 const MethodMappingContent: React.FC = () => {
@@ -167,7 +167,7 @@ const MethodMappingContent: React.FC = () => {
                 Backend Modernization Studio
               </span>
               <span className="text-xs font-semibold text-[#6B778C]">
-                Java 21 • Spring Boot 3
+                Java 17 • Spring Boot 3
               </span>
             </div>
             <h1 className="text-2xl font-extrabold text-[#091E42] tracking-tight">

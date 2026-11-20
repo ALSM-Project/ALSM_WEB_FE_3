@@ -10,6 +10,7 @@ import { ApiError } from '@/services/api/apiError';
 import { ROUTES } from '@/shared/constants/routes';
 import { Input } from '@/shared/ui/Input';
 import { Button } from '@/shared/ui/Button';
+import { useOptionalWorkspace } from '@/context/WorkspaceContext';
 
 export interface CreateProjectModalProps {
   isOpen: boolean;
@@ -31,6 +32,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const [conversionType, setConversionType] = useState<ConversionType>('BMS_DSPF_TO_FRONTEND');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const ws = useOptionalWorkspace();
+  const isManagedWorkspace =
+    defaultServiceType === 'MANAGED' ||
+    ws?.activeWorkspace === 'MANAGED' ||
+    ws?.serviceMode === 'WE_CONVERT_FOR_YOU';
 
   // Lock body scroll and reset form when modal opens
   useEffect(() => {
@@ -69,16 +76,19 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     setLoading(true);
     setError('');
     try {
+      const targetServiceType = isManagedWorkspace ? 'MANAGED' : defaultServiceType;
       const proj = await projectService.createProject({
         name: name.trim(),
         description: description.trim(),
         conversionType,
-        serviceType: defaultServiceType,
+        serviceType: targetServiceType,
       });
       queryClient?.invalidateQueries({ queryKey: projectKeys.all });
       onClose();
       if (onProjectCreated) {
         onProjectCreated(proj.id);
+      } else if (isManagedWorkspace) {
+        navigate(`/project-files?projectId=${proj.id}`);
       } else {
         navigate(ROUTES.PROJECTS.UPLOAD(proj.id));
       }
@@ -177,7 +187,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                   <div>
                     <h3 className="text-xs font-bold text-[#091E42]">COBOL &rarr; Java</h3>
                     <p className="text-xs text-[#42526E] mt-0.5">
-                      COBOL programs to Java 21 + Spring Boot.
+                      COBOL programs to Java 17 + Spring Boot.
                     </p>
                   </div>
                   <input

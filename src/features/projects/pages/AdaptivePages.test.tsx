@@ -17,8 +17,8 @@ vi.mock('./ProjectOverviewPage', () => ({
   ProjectOverviewPage: () => <div data-testid="platform-based-project-detail">Project Overview Workbench (Platform-Based)</div>,
 }));
 
-vi.mock('@/features/managed/pages/ManagedProjectDetailPage', () => ({
-  ManagedProjectDetailPage: () => <div data-testid="managed-project-detail">Managed Project Detail (Turnkey SOW)</div>,
+vi.mock('./ProjectFilesPage', () => ({
+  ProjectFilesPage: () => <div data-testid="managed-project-detail">Managed Project Detail (Turnkey SOW)</div>,
 }));
 
 describe('Adaptive Modernization Architecture (Web 3 Contract Types)', () => {

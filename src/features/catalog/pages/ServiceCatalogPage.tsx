@@ -119,7 +119,7 @@ export const ServiceCatalogPage: React.FC = () => {
                 <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-xs space-y-1">
                   <div className="flex items-center gap-1.5 font-semibold text-[#0F172A]">
                     <Server className="w-4 h-4 text-[#2563EB]" />
-                    <span>COBOL to Java 21</span>
+                    <span>COBOL to Java 17</span>
                   </div>
                   <p className="text-[11px] text-[#64748B]">
                     Translate batch data divisions to Spring Boot DTOs and entities.

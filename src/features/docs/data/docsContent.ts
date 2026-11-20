@@ -34,7 +34,7 @@ export const DEFAULT_TOC_ITEMS: TocItem[] = [
   { id: 'bms-dspf', title: '5. BMS / DSPF Screen Mapping', level: 2 },
   { id: 'cobol', title: '6. COBOL Logic Transformation', level: 2 },
   { id: 'react-output', title: '7. React 19 UI Generation', level: 2 },
-  { id: 'java-output', title: '8. Java 21 Spring Microservice', level: 2 },
+  { id: 'java-output', title: '8. Java 17 Spring Microservice', level: 2 },
   { id: 'ai-validation', title: '9. Dual-Layer AI Validation', level: 2 },
   { id: 'diagnostics', title: '10. Diagnostics & AST Telemetry', level: 2 },
   { id: 'project-workflow', title: '11. Project Workflow & Upload', level: 2 },
@@ -84,7 +84,7 @@ export const DOCS_CATEGORIES: DocCategory[] = [
       { id: 'bms-dspf', label: 'BMS / DSPF Screens', icon: Layers, summary: 'Parsing 3270 / 5250 coordinates, attribute bytes, and field macros.' },
       { id: 'cobol', label: 'COBOL Business Logic', icon: Terminal, summary: 'DATA DIVISION to Java records and PROCEDURE DIVISION mapping.' },
       { id: 'react-output', label: 'React 19 Output', icon: Code2, summary: 'Component architecture, Tailwind styling, and responsive layout generation.' },
-      { id: 'java-output', label: 'Java 21 Spring Boot', icon: FileCode, summary: 'Modern REST controllers, Spring Service beans, and domain model generation.' },
+      { id: 'java-output', label: 'Java 17 Spring Boot', icon: FileCode, summary: 'Modern REST controllers, Spring Service beans, and domain model generation.' },
     ],
   },
   {
@@ -166,8 +166,8 @@ export const PIPELINE_STAGES: PipelineStage[] = [
     step: '04',
     name: 'Convert',
     shortDesc: 'Code generation',
-    details: 'Emits modular, type-safe React 19 UI components with Tailwind CSS alongside enterprise Java 21 Spring Boot 3.3 microservices.',
-    tech: 'React 19 + Java 21',
+    details: 'Emits modular, type-safe React 19 UI components with Tailwind CSS alongside enterprise Java 17 Spring Boot 3.3 microservices.',
+    tech: 'React 19 + Java 17',
     targetId: 'react-output',
   },
   {
@@ -205,13 +205,13 @@ export const SAMPLE_API_SPECS: ApiEndpointSpec[] = [
     method: 'POST',
     endpoint: '/api/v1/conversions/run',
     title: 'Trigger Automated AST Conversion',
-    description: 'Executes deterministic AST transformation for a specified project. Generates React 19 and Java 21 artifacts.',
+    description: 'Executes deterministic AST transformation for a specified project. Generates React 19 and Java 17 artifacts.',
     authRequired: true,
     permission: 'conversions.execute',
     parameters: [
       { name: 'projectId', type: 'string', required: true, description: 'Unique hex identifier of the enterprise project.' },
       { name: 'targetFramework', type: 'string', required: false, description: 'Target UI framework: "REACT_19" | "VUE_3". Default: "REACT_19".' },
-      { name: 'javaVersion', type: 'string', required: false, description: 'Backend runtime version: "JAVA_21" | "JAVA_17". Default: "JAVA_21".' },
+      { name: 'javaVersion', type: 'string', required: false, description: 'Backend runtime version: "JAVA_17" | "JAVA_17". Default: "JAVA_17".' },
     ],
     requestBody: `{
   "projectId": "6ad999ed1287fa0337709c7",
@@ -236,7 +236,7 @@ export const SAMPLE_API_SPECS: ApiEndpointSpec[] = [
     method: 'GET',
     endpoint: '/api/v1/projects/:id/export',
     title: 'Download Modernized Project Bundle',
-    description: 'Generates and downloads a signed ZIP bundle containing modernized React 19 source, Java 21 microservice, and Dockerfile.',
+    description: 'Generates and downloads a signed ZIP bundle containing modernized React 19 source, Java 17 microservice, and Dockerfile.',
     authRequired: true,
     permission: 'projects.export',
     parameters: [
@@ -407,7 +407,7 @@ export const AccountManagementScreen: React.FC = () => {
            END-IF.`,
 
   java: `// ==================================================================
-// ALSM Generated Java 21 / Spring Boot 3.3 Microservice
+// ALSM Generated Java 17 / Spring Boot 3.3 Microservice
 // Modernized from ACCTPROC.cbl Procedure Division & Copybooks
 // ==================================================================
 package com.alsm.modernized.banking.service;

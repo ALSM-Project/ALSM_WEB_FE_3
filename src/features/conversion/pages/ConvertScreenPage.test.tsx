@@ -304,7 +304,7 @@ describe('ConvertScreenPage - target technology, execution and error states', ()
       </QueryClientProvider>
     );
 
-  it('displays Java 21 + Spring Boot for COBOL and React 19 TypeScript for BMS', async () => {
+  it('displays Java 17 + Spring Boot for COBOL and React 19 TypeScript for BMS', async () => {
     mocks.getScreenById.mockResolvedValueOnce({
       id: 'scr-cobol',
       projectId: 'proj-acme',
@@ -317,7 +317,7 @@ describe('ConvertScreenPage - target technology, execution and error states', ()
     mocks.getLatestConversion.mockResolvedValue(null);
 
     renderPage('proj-acme', 'scr-cobol');
-    expect(await screen.findByText('Target: Java 21 + Spring Boot')).toBeInTheDocument();
+    expect(await screen.findByText('Target: Java 17 + Spring Boot')).toBeInTheDocument();
   });
 
   it('displays failed conversion job error details', async () => {

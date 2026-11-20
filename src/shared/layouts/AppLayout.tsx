@@ -236,12 +236,12 @@ export const AppLayoutContent: React.FC = () => {
                     <button
                       onClick={() => {
                         setProfileOpen(false);
-                        navigate(ROUTES.BILLING.UPGRADE_ENTERPRISE);
+                        navigate(ROUTES.BILLING.USAGE);
                       }}
                       className="w-full text-left px-3.5 py-2 text-[#42526E] hover:bg-[#F7F9FC] font-medium transition-colors flex items-center space-x-2"
                     >
-                      <CreditCard className="w-4 h-4 text-slate-400" />
-                      <span>Contact & Upgrade</span>
+                      <BarChart3 className="w-4 h-4 text-emerald-500" />
+                      <span>Service Usage &amp; Quotas</span>
                     </button>
                   )}
                   <Link
@@ -279,16 +279,7 @@ export const AppLayoutContent: React.FC = () => {
               )}
             </div>
 
-            {/* Upgrade Button — hidden when user is Enterprise */}
-            {!isEnterprise && !isEnterpriseSuspended && (
-              <button
-                type="button"
-                onClick={() => navigate(ROUTES.BILLING.UPGRADE_ENTERPRISE)}
-                className="px-3.5 py-1.5 bg-[#244A70] hover:bg-[#1B3856] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-              >
-                Upgrade
-              </button>
-            )}
+            {/* Upgrade Button — removed in Web 3 Partner Workspace since user is already in Web 3 */}
           </div>
         </header>
 

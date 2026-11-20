@@ -2,14 +2,14 @@ import React from 'react';
 import { useCapabilities } from '@/context/BootstrapContext';
 import { useWorkspace } from '@/context/WorkspaceContext';
 import { ProjectOverviewPage } from './ProjectOverviewPage';
-import { ManagedProjectDetailPage } from '@/features/managed/pages/ManagedProjectDetailPage';
+import { ProjectFilesPage } from './ProjectFilesPage';
 
 /**
  * AdaptiveProjectDetailPage
  *
  * Big Tech Entitlements + Capabilities:
- * Dynamically renders the appropriate project detail page based on capabilities:
- * - can('deliverable.view') && !can('screen.convert') -> ManagedProjectDetailPage (Turnkey deliverables, SOW milestones)
+ * Dynamically renders the appropriate project detail page based on capabilities/workspace:
+ * - Managed Modernization Services (WE_CONVERT_FOR_YOU / MANAGED) -> ProjectFilesPage (Project Files & Deliverables)
  * - Otherwise -> ProjectOverviewPage (Screen conversion workbench, AST mapping)
  */
 export const AdaptiveProjectDetailPage: React.FC = () => {
@@ -18,10 +18,11 @@ export const AdaptiveProjectDetailPage: React.FC = () => {
 
   const isManaged =
     serviceMode === 'WE_CONVERT_FOR_YOU' ||
-    (activeWorkspace === 'MANAGED' && can('deliverable.view') && !can('screen.convert'));
+    activeWorkspace === 'MANAGED' ||
+    (can('deliverable.view') && !can('screen.convert'));
 
   if (isManaged) {
-    return <ManagedProjectDetailPage />;
+    return <ProjectFilesPage />;
   }
 
   return <ProjectOverviewPage />;

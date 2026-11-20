@@ -72,7 +72,7 @@ const BulkConvertContent: React.FC = () => {
     project?.conversionType === 'COBOL_TO_JAVA' ||
     (screens.length > 0 && screens.every((s) => PROGRAM_SOURCE_TYPES.has(s.sourceType)));
 
-  const targetFramework = isCobolProject ? 'Java 21 + Spring Boot' : 'React 19 + TypeScript';
+  const targetFramework = isCobolProject ? 'Java 17 + Spring Boot' : 'React 19 + TypeScript';
   const conversionEngine = isCobolProject ? 'ALSM tool2java Pipeline' : 'ALSM Synthesis Pipeline';
 
   const alreadyCompletedCount = useMemo(() => {

@@ -187,7 +187,7 @@ export const DocumentationPortal: React.FC = () => {
 
               <h3 className="text-base font-bold text-slate-900">What is ALSM?</h3>
               <p className="max-w-prose text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-                <strong className="text-slate-950 font-bold">ALSM (Automated Legacy Screen & Code Modernization)</strong> is an enterprise-grade platform designed to accelerate the digital transformation of mission-critical legacy mainframe and midrange systems. By deterministically parsing legacy IBM CICS BMS screen maps, AS/400 DSPF display files, and COBOL programs, ALSM automatically generates modern React 19 UI components and Java 21 Spring Boot 3.3 microservices.
+                <strong className="text-slate-950 font-bold">ALSM (Automated Legacy Screen & Code Modernization)</strong> is an enterprise-grade platform designed to accelerate the digital transformation of mission-critical legacy mainframe and midrange systems. By deterministically parsing legacy IBM CICS BMS screen maps, AS/400 DSPF display files, and COBOL programs, ALSM automatically generates modern React 19 UI components and Java 17 Spring Boot 3.3 microservices.
               </p>
 
               <p className="max-w-prose text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
@@ -216,7 +216,7 @@ export const DocumentationPortal: React.FC = () => {
 
               <ol className="max-w-prose space-y-3 text-xs sm:text-sm text-slate-800 list-decimal pl-5 leading-relaxed">
                 <li>
-                  <strong className="text-slate-950 font-bold">Create a Modernization Project:</strong> Navigate to the Projects dashboard, click <em>&ldquo;New Project&rdquo;</em>, and specify your project name, target framework (React 19), and backend runtime (Java 21).
+                  <strong className="text-slate-950 font-bold">Create a Modernization Project:</strong> Navigate to the Projects dashboard, click <em>&ldquo;New Project&rdquo;</em>, and specify your project name, target framework (React 19), and backend runtime (Java 17).
                 </li>
                 <li>
                   <strong className="text-slate-950 font-bold">Upload Source Files:</strong> Ingest your legacy BMS maps (<code className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-900 font-mono text-xs font-semibold">.bms</code>), AS/400 display files (<code className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-900 font-mono text-xs font-semibold">.dspf</code>), or COBOL programs (<code className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-900 font-mono text-xs font-semibold">.cbl</code>, <code className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-900 font-mono text-xs font-semibold">.cob</code>).
@@ -400,20 +400,20 @@ export const DocumentationPortal: React.FC = () => {
               <CodeBlock code={CODE_SNIPPETS.react} language="typescript" filename="AccountManagementScreen.tsx (Generated React 19)" />
             </section>
 
-            {/* ─── 7. Java 21 Spring Boot Microservices ─── */}
+            {/* ─── 7. Java 17 Spring Boot Microservices ─── */}
             <section id="java-output" aria-labelledby="heading-java-output" className="space-y-4 pt-4">
               <div className="flex items-center gap-2.5 pb-2.5 border-b border-slate-200">
                 <FileCode className="w-5 h-5 text-blue-600 shrink-0" />
                 <h2 id="heading-java-output" className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                  7. Java 21 Spring Boot Microservices
+                  7. Java 17 Spring Boot Microservices
                 </h2>
               </div>
 
               <p className="max-w-prose text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-                Backend services are packaged as modular Spring Boot 3.3 microservices using Java 21 records, immutable domain structures, and standard REST conventions.
+                Backend services are packaged as modular Spring Boot 3.3 microservices using Java 17 records, immutable domain structures, and standard REST conventions.
               </p>
 
-              <CodeBlock code={CODE_SNIPPETS.java} language="java" filename="AccountProcessorService.java (Generated Java 21)" />
+              <CodeBlock code={CODE_SNIPPETS.java} language="java" filename="AccountProcessorService.java (Generated Java 17)" />
             </section>
 
             {/* ─── 8. AI Validation & Quality Review ─── */}
@@ -532,7 +532,7 @@ export const DocumentationPortal: React.FC = () => {
                   },
                   {
                     q: 'Are generated microservices bound to proprietary ALSM runtime libraries?',
-                    a: 'No. ALSM generates clean, 100% standard open-source React 19 JSX and Java 21 Spring Boot 3.3 source code with zero proprietary runtime lock-in. You own and can deploy the code to any standard cloud infrastructure.',
+                    a: 'No. ALSM generates clean, 100% standard open-source React 19 JSX and Java 17 Spring Boot 3.3 source code with zero proprietary runtime lock-in. You own and can deploy the code to any standard cloud infrastructure.',
                   },
                   {
                     q: 'How is data privacy and source code security protected?',

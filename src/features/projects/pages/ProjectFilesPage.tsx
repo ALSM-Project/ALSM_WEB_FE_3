@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams, useParams } from 'react-router-dom';
 import {
   FileCode2,
   UploadCloud,
@@ -50,8 +50,19 @@ export interface IntakeFile {
 
 export const ProjectFilesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const paramProjectId = searchParams.get('projectId');
+  const { projectId: routeProjectId, id: routeId } = useParams<{ projectId?: string; id?: string }>();
+  const paramProjectId = searchParams.get('projectId') || routeProjectId || routeId;
   const paramSection = searchParams.get('tab') === 'deliverables' ? 'DELIVERABLES' : 'CUSTOMER_INPUT';
+
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
+  const setFolderInputRef = useCallback((node: HTMLInputElement | null) => {
+    folderInputRef.current = node;
+    if (node) {
+      node.setAttribute('webkitdirectory', '');
+      node.setAttribute('directory', '');
+      (node as any).webkitdirectory = true;
+    }
+  }, []);
 
   // Section switcher: 'CUSTOMER_INPUT' or 'DELIVERABLES'
   const [activeSection, setActiveSection] = useState<'CUSTOMER_INPUT' | 'DELIVERABLES'>(paramSection);
@@ -624,14 +635,15 @@ export const ProjectFilesPage: React.FC = () => {
                   <span>Upload Entire Folder</span>
                   <input
                     type="file"
+                    ref={setFolderInputRef}
                     multiple
-                    {...({ webkitdirectory: '', directory: '' } as any)}
                     className="hidden"
                     disabled={isUploading || !selectedProjectId}
                     onChange={(e) => {
-                      if (e.target.files?.length) {
-                        void handleUploadFiles(Array.from(e.target.files));
-                        e.target.value = '';
+                      const picked = e.target.files ? Array.from(e.target.files) : [];
+                      e.target.value = '';
+                      if (picked.length) {
+                        void handleUploadFiles(picked);
                       }
                     }}
                   />
