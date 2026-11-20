@@ -7,7 +7,7 @@ import { CreateProjectModal } from '../components/CreateProjectModal';
 import { EditProjectModal } from '../components/EditProjectModal';
 import { projectService } from '../services/project.service';
 import type { Project } from '../types/project';
-import { useWorkspace } from '@/context/WorkspaceContext';
+import { useOptionalWorkspace } from '@/context/WorkspaceContext';
 
 const LEGACY_TYPE_LABEL: Record<string, string> = {
   BMS_DSPF_TO_REACT: 'BMS / DSPF',
@@ -22,7 +22,9 @@ const TARGET_FRAMEWORK_LABEL: Record<string, string> = {
 
 export const ProjectsListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { activeWorkspace, serviceMode } = useWorkspace();
+  const workspaceContext = useOptionalWorkspace();
+  const activeWorkspace = workspaceContext?.activeWorkspace;
+  const serviceMode = workspaceContext?.serviceMode;
   const isManaged = activeWorkspace === 'MANAGED' || serviceMode === 'WE_CONVERT_FOR_YOU';
 
   const [searchQuery, setSearchQuery] = useState('');
