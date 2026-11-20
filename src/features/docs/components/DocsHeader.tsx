@@ -113,7 +113,7 @@ export const DocsHeader: React.FC<DocsHeaderProps> = ({
         </h1>
 
         <p className="max-w-[620px] text-xs sm:text-sm text-slate-700 leading-relaxed font-normal">
-          Comprehensive enterprise technical reference for analyzing, transforming, validating, and exporting IBM CICS BMS screen maps, AS/400 DSPF display files, and COBOL applications into production-ready React 19 UI interfaces and Java 21 Spring Boot microservices.
+          Comprehensive enterprise technical reference for analyzing, transforming, validating, and exporting IBM CICS BMS screen maps, AS/400 DSPF display files, and COBOL applications into production-ready React 19 UI interfaces and Java 17 Spring Boot microservices.
         </p>
       </div>
     </header>
