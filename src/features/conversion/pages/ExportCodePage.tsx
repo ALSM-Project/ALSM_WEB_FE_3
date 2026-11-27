@@ -13,6 +13,9 @@ import { Badge } from '@/shared/ui/Badge';
 import { conversionService } from '../services/conversion.service';
 import { exportService } from '../services/export.service';
 import { projectService } from '@/features/projects/services/project.service';
+import { ModernizationWorkflow } from '@/shared/ui/ModernizationWorkflow';
+import { isCobolProjectSync } from '@/shared/utils/projectCache';
+import { resolveWorkspace } from '@/features/projects/utils/conversionTypeResolver';
 import type { LegacyScreen } from '@/features/screens/types/screen';
 import type { Project } from '@/features/projects/types/project';
 import type {
@@ -37,9 +40,20 @@ const ExportCodeContent: React.FC = () => {
   const [screens, setScreens] = useState<LegacyScreen[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isCobolInit = isCobolProjectSync(projectId);
+  const isCobol = Boolean(
+    isCobolInit ||
+    project?.conversionType === 'COBOL_TO_JAVA' ||
+    resolveWorkspace(project?.conversionType) === 'PROGRAMS' ||
+    project?.name?.toLowerCase().includes('cobol') ||
+    screens.some((s) => s.sourceType === 'COBOL' || s.name?.toLowerCase().endsWith('.cbl'))
+  );
+
   // Configuration options
   const [outputOption, setOutputOption] = useState<ExportOutputOption>('scaffold');
-  const [frameworkTarget, setFrameworkTarget] = useState<FrameworkTarget>('react-19');
+  const [frameworkTarget, setFrameworkTarget] = useState<FrameworkTarget>(
+    isCobolInit ? 'java-17' : 'react-19'
+  );
   const [includeTypeScriptStrict, setIncludeTypeScriptStrict] = useState(true);
   const [includeUnitTests, setIncludeUnitTests] = useState(true);
   const [includeDocumentation, setIncludeDocumentation] = useState(true);
@@ -66,12 +80,22 @@ const ExportCodeContent: React.FC = () => {
         if (mounted) {
           setProject(projData);
           setScreens(screensData);
+          const isCobolDetected = Boolean(
+            isCobolProjectSync(projectId) ||
+            projData?.conversionType === 'COBOL_TO_JAVA' ||
+            resolveWorkspace(projData?.conversionType) === 'PROGRAMS' ||
+            projData?.name?.toLowerCase().includes('cobol') ||
+            screensData.some((s) => s.sourceType === 'COBOL' || s.name?.toLowerCase().endsWith('.cbl'))
+          );
+          if (isCobolDetected) {
+            setFrameworkTarget('java-17');
+          }
           // Default select all completed screens
           const completedIds = screensData
-            .filter((s) => s.status === 'Completed')
+            .filter((s) => s.status?.toLowerCase() === 'completed')
             .map((s) => s.id);
           setSelectedScreenIds(
-            completedIds.length > 0 ? completedIds : screensData.slice(0, 2).map((s) => s.id)
+            completedIds.length > 0 ? completedIds : screensData.map((s) => s.id)
           );
         }
       } catch (err) {
@@ -187,7 +211,11 @@ const ExportCodeContent: React.FC = () => {
 
     setIsExportModalOpen(true);
     setExportProgress(10);
-    setStepLabel('Validating export eligibility & screens...');
+    setStepLabel(
+      isCobol
+        ? 'Validating export eligibility & COBOL programs...'
+        : 'Validating export eligibility & screens...'
+    );
     setIsComplete(false);
     setExportError(null);
 
@@ -237,6 +265,30 @@ const ExportCodeContent: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24">
+      <ModernizationWorkflow
+        workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'}
+        currentStep="export"
+        completedSteps={
+          isCobol
+            ? ['upload', 'analyze', 'convert', 'validate', 'review']
+            : ['upload', 'conversion', 'validation', 'result']
+        }
+        onStepClick={(stepId: string) => {
+          if (isCobol) {
+            if (stepId === 'upload') navigate(`${ROUTES.PROJECTS.UPLOAD(projectId)}?tab=programs`);
+            if (stepId === 'analyze') navigate(`${ROUTES.PROJECTS.SCREENS(projectId)}?stage=analyze`);
+            if (stepId === 'convert') navigate(`${ROUTES.PROJECTS.SCREENS(projectId)}?stage=convert`);
+            if (stepId === 'validate') navigate(`${ROUTES.PROJECTS.SCREENS(projectId)}?stage=validate`);
+            if (stepId === 'review' || stepId === 'result') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          } else {
+            if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+            if (stepId === 'conversion') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'result') navigate(ROUTES.PROJECTS.SCREENS(projectId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          }
+        }}
+      />
 
       {/* Page Header (ALSM Design System) */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -251,7 +303,9 @@ const ExportCodeContent: React.FC = () => {
             </Badge>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Package and download modernized React components (from BMS/DSPF screens) or generated Java source (from COBOL programs), with optional application scaffolding.
+            {isCobol
+              ? 'Package and download modernized Java Spring Boot source code and batch job components, with turnkey Maven application scaffolding.'
+              : 'Package and download modernized React components (from BMS/DSPF screens) or generated Java source (from COBOL programs), with optional application scaffolding.'}
           </p>
         </div>
 
@@ -313,14 +367,16 @@ const ExportCodeContent: React.FC = () => {
                     <div>
                       <div className="flex items-center space-x-2">
                         <h3 className="text-sm font-bold text-slate-900">
-                          Full Project Scaffold
+                          {isCobol ? 'Full Maven / Spring Boot Scaffold' : 'Full Project Scaffold'}
                         </h3>
                         <span className="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">
                           Recommended
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 mt-1">
-                        Turnkey application with Vite, React 19/18, TypeScript, Tailwind CSS, routing, and all converted screens ready to run locally.
+                        {isCobol
+                          ? 'Turnkey Spring Boot application with Maven (pom.xml), Spring Batch, job configurations, models, and tasklets ready to build with mvn clean package.'
+                          : 'Turnkey application with Vite, React 19/18, TypeScript, Tailwind CSS, routing, and all converted screens ready to run locally.'}
                       </p>
                     </div>
                   </div>
@@ -356,10 +412,12 @@ const ExportCodeContent: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-slate-900">
-                        Standalone Component Files
+                        {isCobol ? 'Standalone Java Classes & Models' : 'Standalone Component Files'}
                       </h3>
                       <p className="text-xs text-slate-600 mt-1">
-                        Clean, isolated TSX component files and index barrel. Perfect for copying directly into an existing repository or monorepo.
+                        {isCobol
+                          ? 'Clean, isolated Java source files (Jobs, Tasklets, Models) in package hierarchy ready to copy directly into an existing repository or monorepo.'
+                          : 'Clean, isolated TSX component files and index barrel. Perfect for copying directly into an existing repository or monorepo.'}
                       </p>
                     </div>
                   </div>
@@ -373,7 +431,7 @@ const ExportCodeContent: React.FC = () => {
                 </div>
               </div>
 
-              {/* Option: Storybook Design System */}
+              {/* Option: Storybook / Modular Suite */}
               <div
                 onClick={() => setOutputOption('storybook')}
                 className={`p-4 rounded-xl border cursor-pointer transition-all ${
@@ -395,10 +453,12 @@ const ExportCodeContent: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-slate-900">
-                        Storybook Design System
+                        {isCobol ? 'Modular Spring Batch Job Suite' : 'Storybook Design System'}
                       </h3>
                       <p className="text-xs text-slate-600 mt-1">
-                        Component library packaged with Storybook configuration, sample interactive stories, and design tokens documentation.
+                        {isCobol
+                          ? 'Modular Spring Batch jobs with database configuration, job execution listeners, and execution properties.'
+                          : 'Component library packaged with Storybook configuration, sample interactive stories, and design tokens documentation.'}
                       </p>
                     </div>
                   </div>
@@ -418,36 +478,57 @@ const ExportCodeContent: React.FC = () => {
           <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-2xs">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                2. FRAMEWORK & TARGET SETTINGS
+                {isCobol ? '2. JAVA RUNTIME & FRAMEWORK SETTINGS' : '2. FRAMEWORK & TARGET SETTINGS'}
               </label>
               <p className="text-xs text-slate-500 mt-0.5">
-                Specify compiler targets, test runners, and developer tooling.
+                {isCobol
+                  ? 'Specify target Java SDK version, Spring Boot release, and build tooling.'
+                  : 'Specify compiler targets, test runners, and developer tooling.'}
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <span className="block text-xs font-semibold text-slate-700">
-                  Target Framework Version
+                  {isCobol ? 'Target Java Version' : 'Target Framework Version'}
                 </span>
-                <select
-                  value={frameworkTarget}
-                  onChange={(e) => setFrameworkTarget(e.target.value as FrameworkTarget)}
-                  className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <option value="react-19">React 19.x (Modern with Compiler)</option>
-                  <option value="react-18">React 18.2.0 (Stable LTS)</option>
-                </select>
+                {isCobol ? (
+                  <select
+                    value={frameworkTarget}
+                    onChange={(e) => setFrameworkTarget(e.target.value as FrameworkTarget)}
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="java-17">Java 17 (LTS - Recommended)</option>
+                    <option value="java-21">Java 21 (Modern LTS)</option>
+                    <option value="java-11">Java 11 (Legacy LTS)</option>
+                    <option value="java-8">Java 8 (Legacy Enterprise)</option>
+                  </select>
+                ) : (
+                  <select
+                    value={frameworkTarget}
+                    onChange={(e) => setFrameworkTarget(e.target.value as FrameworkTarget)}
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="react-19">React 19.x (Modern with Compiler)</option>
+                    <option value="react-18">React 18.2.0 (Stable LTS)</option>
+                  </select>
+                )}
               </div>
 
               <div className="space-y-1.5">
                 <span className="block text-xs font-semibold text-slate-700">
-                  CSS Styling Architecture
+                  {isCobol ? 'Build & Framework Tooling' : 'CSS Styling Architecture'}
                 </span>
                 <input
                   type="text"
                   disabled
-                  value="Tailwind CSS 3.4 (Pre-configured)"
+                  value={
+                    isCobol
+                      ? frameworkTarget === 'java-8' || frameworkTarget === 'java-11'
+                        ? 'Spring Boot 2.7.18 + Maven pom.xml (LTS)'
+                        : 'Spring Boot 3.3.5 + Maven pom.xml (Spring Batch 5)'
+                      : 'Tailwind CSS 3.4 (Pre-configured)'
+                  }
                   className="w-full bg-slate-100 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-600 font-medium cursor-not-allowed"
                 />
               </div>
@@ -455,41 +536,83 @@ const ExportCodeContent: React.FC = () => {
 
             {/* Additional Features Toggle */}
             <div className="pt-2 border-t border-slate-100 space-y-2.5">
-              <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
-                <input
-                  type="checkbox"
-                  checked={includeTypeScriptStrict}
-                  onChange={(e) => setIncludeTypeScriptStrict(e.target.checked)}
-                  className="rounded text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-slate-800 font-medium">
-                  TypeScript strict type-checking (`tsconfig.json` strict mode)
-                </span>
-              </label>
+              {isCobol ? (
+                <>
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeUnitTests}
+                      onChange={(e) => setIncludeUnitTests(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-slate-800 font-medium">
+                      Include automated JUnit 5 / Spring Batch unit tests (*Test.java with Mockito)
+                    </span>
+                  </label>
 
-              <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
-                <input
-                  type="checkbox"
-                  checked={includeUnitTests}
-                  onChange={(e) => setIncludeUnitTests(e.target.checked)}
-                  className="rounded text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-slate-800 font-medium">
-                  Include automated unit tests (`*.test.tsx` with Vitest & RTL)
-                </span>
-              </label>
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeTypeScriptStrict}
+                      onChange={(e) => setIncludeTypeScriptStrict(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-slate-800 font-medium">
+                      Include Maven build wrapper scripts (`mvnw`, `mvnw.cmd`, `.mvn/wrapper`)
+                    </span>
+                  </label>
 
-              <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
-                <input
-                  type="checkbox"
-                  checked={includeDocumentation}
-                  onChange={(e) => setIncludeDocumentation(e.target.checked)}
-                  className="rounded text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-slate-800 font-medium">
-                  Include Quickstart documentation (`README.md`)
-                </span>
-              </label>
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeDocumentation}
+                      onChange={(e) => setIncludeDocumentation(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-slate-800 font-medium">
+                      Include Quickstart & Architecture documentation (`README.md`, setup guide)
+                    </span>
+                  </label>
+                </>
+              ) : (
+                <>
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeTypeScriptStrict}
+                      onChange={(e) => setIncludeTypeScriptStrict(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-slate-800 font-medium">
+                      TypeScript strict type-checking (`tsconfig.json` strict mode)
+                    </span>
+                  </label>
+
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeUnitTests}
+                      onChange={(e) => setIncludeUnitTests(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-slate-800 font-medium">
+                      Include automated unit tests (`*.test.tsx` with Vitest & RTL)
+                    </span>
+                  </label>
+
+                  <label className="flex items-center space-x-2.5 cursor-pointer text-xs select-none">
+                    <input
+                      type="checkbox"
+                      checked={includeDocumentation}
+                      onChange={(e) => setIncludeDocumentation(e.target.checked)}
+                      className="rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-slate-800 font-medium">
+                      Include Quickstart documentation (`README.md`)
+                    </span>
+                  </label>
+                </>
+              )}
             </div>
           </div>
 
@@ -501,6 +624,7 @@ const ExportCodeContent: React.FC = () => {
               onToggleScreen={handleToggleScreen}
               onSelectAllConverted={handleSelectAllConverted}
               onDeselectAll={handleDeselectAll}
+              isCobol={isCobol}
             />
           </div>
         </div>
@@ -522,7 +646,7 @@ const ExportCodeContent: React.FC = () => {
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
                 <p className="text-[10px] uppercase font-bold text-slate-500">
-                  Screens
+                  {isCobol ? 'Programs' : 'Screens'}
                 </p>
                 <p className="text-lg font-extrabold text-slate-900 mt-0.5">
                   {metrics.selectedScreensCount}
@@ -560,13 +684,29 @@ const ExportCodeContent: React.FC = () => {
               <div className="flex justify-between">
                 <span>Output Format:</span>
                 <strong className="text-slate-800 capitalize">
-                  {outputOption}
+                  {isCobol
+                    ? outputOption === 'scaffold'
+                      ? 'Maven Spring Boot Scaffold'
+                      : outputOption === 'standalone'
+                      ? 'Standalone Java Classes'
+                      : 'Spring Batch Suite'
+                    : outputOption}
                 </strong>
               </div>
               <div className="flex justify-between">
                 <span>Runtime Target:</span>
                 <strong className="text-slate-800">
-                  {frameworkTarget === 'react-19' ? 'React 19' : 'React 18'}
+                  {isCobol
+                    ? frameworkTarget === 'java-21'
+                      ? 'Java 21 + Spring Boot 3.3 (Maven)'
+                      : frameworkTarget === 'java-11'
+                      ? 'Java 11 + Spring Boot 2.7 (Maven)'
+                      : frameworkTarget === 'java-8'
+                      ? 'Java 8 + Spring Boot 2.7 (Maven)'
+                      : 'Java 17 + Spring Boot 3.3 (Maven)'
+                    : frameworkTarget === 'react-19'
+                    ? 'React 19'
+                    : 'React 18'}
                 </strong>
               </div>
             </div>
@@ -592,7 +732,8 @@ const ExportCodeContent: React.FC = () => {
           <div className="flex items-center space-x-2 text-xs text-slate-600">
             <span className="w-2 h-2 rounded-full bg-blue-600"></span>
             <span>
-              <strong>{metrics.selectedScreensCount}</strong> screens selected •{' '}
+              <strong>{metrics.selectedScreensCount}</strong>{' '}
+              {isCobol ? 'programs' : 'screens'} selected •{' '}
               <strong>{metrics.totalFiles}</strong> files in bundle • Est. size:{' '}
               <strong className="font-mono text-slate-800">
                 {metrics.estimatedSizeKb > 1024
@@ -634,7 +775,9 @@ const ExportCodeContent: React.FC = () => {
         screensCount={metrics.selectedScreensCount}
         onDownloadAgain={handleDownloadAgain}
         onClose={handleCloseModal}
+        onBackToWorkspace={() => navigate(ROUTES.PROJECTS.SCREENS(projectId))}
         onRetry={handleStartExport}
+        isCobol={isCobol}
       />
     </div>
   );

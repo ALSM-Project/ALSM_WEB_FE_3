@@ -16,6 +16,7 @@ interface TerminalLabel {
   initial?: string;
   name?: string;
   color?: string;
+  isBright?: boolean;
 }
 
 interface TerminalInput {
@@ -37,27 +38,12 @@ interface TerminalData {
   functionKeys: string[];
 }
 
-function get3270ColorClass(color?: string): string {
-  const c = (color || 'GREEN').toUpperCase();
-  switch (c) {
-    case 'BLUE':
-      return 'text-blue-400';
-    case 'TURQUOISE':
-    case 'CYAN':
-      return 'text-cyan-400';
-    case 'YELLOW':
-      return 'text-yellow-300';
-    case 'RED':
-      return 'text-red-400';
-    case 'PINK':
-      return 'text-pink-400';
-    case 'NEUTRAL':
-    case 'WHITE':
-      return 'text-slate-200';
-    case 'GREEN':
-    default:
-      return 'text-green-400';
+function get3270ColorClass(_color?: string, isBright?: boolean): string {
+  // Authentic IBM 3270 Monochrome Green Phosphor (Zero multi-color noise)
+  if (isBright) {
+    return 'text-[#86efac] font-bold drop-shadow-[0_0_2px_rgba(74,222,128,0.4)]';
   }
+  return 'text-[#00dd00]';
 }
 
 /**
@@ -159,9 +145,19 @@ function parseTerminalFromTsx(
     }
 
     const color = extractColor(rawAttrs);
+    const isBright =
+      rawAttrs.includes('font-semibold') ||
+      rawAttrs.includes('font-bold') ||
+      rawAttrs.includes('text-slate') ||
+      rawAttrs.includes('text-neutral') ||
+      rawAttrs.includes('text-white') ||
+      color === 'NEUTRAL' ||
+      color === 'WHITE' ||
+      initial === 'Delete User' ||
+      (initial.startsWith('===') && initial.endsWith('==='));
 
     // Keep all spans in labels so they render with exact positions, colors, and line tracks
-    labels.push({ row, col, length: length || initial.length || 1, initial, color });
+    labels.push({ row, col, length: length || initial.length || 1, initial, color, isBright });
 
     if (
       initial.includes('=') &&
@@ -384,14 +380,17 @@ export const LiveTsxRenderer: React.FC<LiveTsxRendererProps> = ({
   };
 
   return (
-    <div className="w-full bg-[#0a0f18] border border-slate-700/80 rounded-xl shadow-xl overflow-hidden font-mono">
+    <div className="w-full rounded-xl shadow-xl overflow-hidden font-mono bg-[#030d05] border border-green-800/60 ring-1 ring-green-900/30">
       {/* Clean Control Bar */}
-      <div className="bg-[#121927] px-4 py-2.5 border-b border-slate-700/80 flex items-center justify-between gap-4 text-xs select-none">
+      <div className="px-4 py-2.5 border-b bg-[#07170a] border-green-900/60 flex items-center justify-between gap-4 text-xs select-none">
         <div className="flex items-center space-x-2.5">
-          <Terminal className="w-4 h-4 text-emerald-400" />
+          <Terminal className="w-4 h-4 text-green-400" />
           <span className="font-bold text-slate-200">{screenName}</span>
-          <span className="text-[11px] text-slate-400 font-mono">
+          <span className="text-[11px] font-mono text-green-500/80">
             {terminalData.gridCols}x{terminalData.gridRows} Terminal Grid
+          </span>
+          <span className="bg-green-950/80 border border-green-700/60 text-green-300 text-[10px] px-2 py-0.5 rounded font-mono font-medium">
+            IBM 3270 Green Screen
           </span>
         </div>
 
@@ -417,7 +416,7 @@ export const LiveTsxRenderer: React.FC<LiveTsxRendererProps> = ({
       </div>
 
       {/* 3270 Character Grid Canvas */}
-      <div className="p-4 sm:p-6 bg-black overflow-x-auto flex justify-center">
+      <div className="p-4 sm:p-6 overflow-x-auto flex justify-center bg-black shadow-[inset_0_0_100px_rgba(0,35,0,0.35)]">
         <div
           className="relative font-mono select-text"
           style={{
@@ -435,7 +434,7 @@ export const LiveTsxRenderer: React.FC<LiveTsxRendererProps> = ({
           {terminalData.labels
             .filter((l) => (l.row || 0) > 0 && (l.col || 0) > 0)
             .map((l, idx) => {
-              const colorClass = get3270ColorClass(l.color);
+              const colorClass = get3270ColorClass(l.color, l.isBright);
               const maxSpace = Math.max(getNextColOnRow(l.row, l.col) - l.col, 1);
               const rawText = l.initial || (l.name ? `[${l.name}]` : '');
               const displayText = formatLabelDisplayText(rawText, maxSpace);
@@ -484,8 +483,8 @@ export const LiveTsxRenderer: React.FC<LiveTsxRendererProps> = ({
                   }}
                   className={`bg-black font-mono px-0 py-0 leading-none h-[1.35em] ${
                     i.readOnly
-                      ? 'text-cyan-300 border-0 cursor-not-allowed opacity-90'
-                      : 'text-green-400 underline border-0 border-b border-dotted border-green-700 focus:outline-none focus:border-solid focus:border-cyan-400 focus:text-cyan-300'
+                      ? 'text-[#00dd00] border-0 cursor-not-allowed opacity-90'
+                      : 'text-[#00ff00] underline border-0 border-b border-dotted border-green-600 focus:outline-none focus:border-solid focus:border-green-400 focus:text-[#86efac]'
                   }`}
                   autoComplete="off"
                   spellCheck={false}
@@ -513,7 +512,7 @@ export const LiveTsxRenderer: React.FC<LiveTsxRendererProps> = ({
                   gridRow: terminalData.gridRows || 24,
                   gridColumn: `1 / span ${terminalData.gridCols || 80}`,
                 }}
-                className="text-yellow-300 font-mono text-[13px] leading-[1.35] whitespace-pre"
+                className="text-[#00dd00] font-mono text-[13px] leading-[1.35] whitespace-pre"
               >
                 {terminalData.functionKeys
                   .map((fk: any) => {

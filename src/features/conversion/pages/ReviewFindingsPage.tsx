@@ -22,6 +22,7 @@ import { useConversionResult } from '../queries/useConversionResult';
 import {
   useTriggerAiValidation,
   useReviewValidationFinding,
+  useApplyAiFix,
   useValidationFindings,
   useValidationRun,
   useValidationRuns,
@@ -33,9 +34,14 @@ import {
   type ValidationFinding,
 } from '../types/validation';
 import { FindingCard } from '../components/FindingCard';
+import { ProgramSwitcher } from '../components/ProgramSwitcher';
 import { CodeViewer } from '../components/CodeViewer';
 import { NotApplicableModal } from '../components/NotApplicableModal';
 import { conversionService } from '../services/conversion.service';
+import { projectService } from '@/features/projects/services/project.service';
+import { resolveWorkspace } from '@/features/projects/utils/conversionTypeResolver';
+import { isCobolProjectSync } from '@/shared/utils/projectCache';
+import type { Project } from '@/features/projects/types/project';
 import type { LegacyScreen } from '@/features/screens/types/screen';
 import { EnsureQueryClient } from '@/shared/ui/EnsureQueryClient';
 import {
@@ -108,6 +114,21 @@ const ReviewFindingsContent: React.FC = () => {
   const navigate = useNavigate();
 
   const [screen, setScreen] = useState<LegacyScreen | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
+
+  React.useEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+    projectService
+      .getProjectById(projectId)
+      .then((p) => {
+        if (!cancelled) setProject(p);
+      })
+      .catch(console.error);
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   React.useEffect(() => {
     if (!screenId) return;
@@ -121,7 +142,29 @@ const ReviewFindingsContent: React.FC = () => {
     };
   }, [screenId]);
 
-  const isCobol = screen?.sourceType === 'COBOL';
+  const [legacySource, setLegacySource] = useState<{ name: string; content: string; linesOfCode: number } | null>(null);
+
+  React.useEffect(() => {
+    if (!screenId) return;
+    let cancelled = false;
+    conversionService.getScreenSource(screenId).then((src) => {
+      if (!cancelled && src && src.content) {
+        setLegacySource(src);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [screenId]);
+
+  const isCobolInit = isCobolProjectSync(projectId);
+  const isCobol = Boolean(
+    isCobolInit ||
+    project?.conversionType === 'COBOL_TO_JAVA' ||
+    resolveWorkspace(project?.conversionType) === 'PROGRAMS' ||
+    project?.name?.toLowerCase().includes('cobol') ||
+    screen?.sourceType === 'COBOL' ||
+    screen?.name?.toLowerCase().endsWith('.cbl') ||
+    screen?.name?.toLowerCase().endsWith('.cob')
+  );
   const mappingRoute = isCobol
     ? ROUTES.PROJECTS.METHOD_MAPPING(projectId, screenId)
     : ROUTES.PROJECTS.MAPPING(projectId, screenId);
@@ -145,6 +188,7 @@ const ReviewFindingsContent: React.FC = () => {
   const completedRun = currentRun?.status === ValidationRunStatus.COMPLETED;
   const findingsQuery = useValidationFindings(projectId, currentRun?.id, completedRun);
   const reviewFinding = useReviewValidationFinding(projectId, currentRun?.id);
+  const applyAiFix = useApplyAiFix(projectId, currentRun?.id);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
   const [selectedGeneratedFilePath, setSelectedGeneratedFilePath] = useState<string | null>(null);
   const [notApplicableFinding, setNotApplicableFinding] = useState<ValidationFinding | null>(null);
@@ -189,6 +233,14 @@ const ReviewFindingsContent: React.FC = () => {
 
   const submitReview = (finding: ValidationFinding, status: HumanReviewTargetStatus) => {
     reviewFinding.mutate({ findingId: finding.id, input: { status } });
+  };
+
+  const handleAcceptAiFix = (finding: ValidationFinding) => {
+    applyAiFix.mutate(finding.id, {
+      onSuccess: () => {
+        conversionResultQuery.refetch();
+      },
+    });
   };
 
   const submitNotApplicable = (reason: string) => {
@@ -373,12 +425,14 @@ const ReviewFindingsContent: React.FC = () => {
                     finding={finding}
                     isSelected={finding.id === selectedFinding?.id}
                     isSubmitting={reviewFinding.isPending}
+                    isFixing={applyAiFix.isPending && (applyAiFix.variables as string) === finding.id}
                     onSelect={() => {
                       setSelectedFindingId(finding.id);
                       setSelectedGeneratedFilePath(null);
                     }}
                     onReview={submitReview}
                     onMarkNotApplicable={setNotApplicableFinding}
+                    onAcceptAiFix={handleAcceptAiFix}
                   />
                 ))}
               </div>
@@ -396,14 +450,35 @@ const ReviewFindingsContent: React.FC = () => {
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                  Original legacy source
-                </p>
-                <p className="mt-2 text-sm font-semibold text-slate-800">Source preview unavailable</p>
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  No authorized source-file read endpoint is available. Use the source file and line
-                  metadata shown on the finding.
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                    Original legacy source
+                  </p>
+                  {legacySource?.linesOfCode ? (
+                    <span className="text-[11px] font-mono text-slate-500 font-medium">
+                      {legacySource.linesOfCode} lines
+                    </span>
+                  ) : null}
+                </div>
+                {legacySource?.content ? (
+                  <div className="max-h-[340px] overflow-hidden rounded-lg border border-slate-700">
+                    <CodeViewer
+                      code={legacySource.content}
+                      filename={legacySource.name || screen?.name || 'legacy-source.cbl'}
+                      language="cobol"
+                      highlightStartLine={selectedFinding?.sourceLocation?.startLine}
+                      highlightEndLine={selectedFinding?.sourceLocation?.endLine}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <p className="mt-2 text-sm font-semibold text-slate-800">Source preview unavailable</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      No authorized source-file read endpoint is available. Use the source file and line
+                      metadata shown on the finding.
+                    </p>
+                  </>
+                )}
               </div>
 
               <div>
@@ -469,13 +544,23 @@ const ReviewFindingsContent: React.FC = () => {
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col space-y-6 bg-slate-50/30 pb-24">
       <ModernizationWorkflow
-        currentStep="validation"
-        completedSteps={['upload', 'conversion']}
+        workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'}
+        currentStep={isCobol ? 'review' : 'validation'}
+        completedSteps={isCobol ? ['upload', 'analyze', 'convert', 'validate'] : ['upload', 'conversion']}
         onStepClick={(stepId) => {
-          if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-          if (stepId === 'conversion') navigate(ROUTES.PROJECTS.CONVERT(projectId, screenId));
-          if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
-          if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          if (isCobol) {
+            if (stepId === 'upload') navigate(`${ROUTES.PROJECTS.UPLOAD(projectId)}?tab=programs`);
+            if (stepId === 'analyze') navigate(`${ROUTES.PROJECTS.SCREENS(projectId)}?stage=analyze`);
+            if (stepId === 'convert') navigate(`${ROUTES.PROJECTS.SCREENS(projectId)}?stage=convert`);
+            if (stepId === 'validate') navigate(`${ROUTES.PROJECTS.SCREENS(projectId)}?stage=validate`);
+            if (stepId === 'review' || stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          } else {
+            if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
+            if (stepId === 'conversion') navigate(ROUTES.PROJECTS.CONVERT(projectId, screenId));
+            if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, screenId));
+            if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
+          }
         }}
       />
 
@@ -484,23 +569,35 @@ const ReviewFindingsContent: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                Validation &amp; Human Review
+                {isCobol ? 'Transpilation Review & Findings' : 'Validation & Human Review'}
               </h1>
 
-              {screen && (
-                <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                  {screen.name}
-                </span>
-              )}
+              <ProgramSwitcher
+                projectId={projectId}
+                currentScreenId={screenId}
+                currentScreenName={screen?.name}
+                targetMode="review"
+              />
 
 
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              AI-generated findings are advisory. Final review decisions are made by human
-              reviewers.
+              {isCobol
+                ? 'Review generated Spring Boot classes, method mappings, and transpiler findings.'
+                : 'AI-generated findings are advisory. Final review decisions are made by human reviewers.'}
             </p>
           </div>
           <div className="flex items-center space-x-2">
+            {isCobol && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(ROUTES.PROJECTS.RESULT(projectId, screenId))}
+                className="space-x-1.5 text-xs font-semibold rounded-full border-[#0652CC] text-[#0652CC] hover:bg-[#F0F6FF]"
+              >
+                <FileCode className="h-3.5 w-3.5" />
+                <span>View Generated Java Code</span>
+              </Button>
+            )}
             {conversionCompleted && currentRun && (
               <Button
                 type="button"

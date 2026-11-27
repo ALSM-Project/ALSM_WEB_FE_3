@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   useValidationFindings: vi.fn(),
   useTriggerAiValidation: vi.fn(),
   useReviewValidationFinding: vi.fn(),
+  useApplyAiFix: vi.fn(() => ({ mutateAsync: vi.fn(), isPending: false, error: null })),
 }));
 
 vi.mock('../queries/useConversionJob', () => ({ useConversionJob: mocks.useConversionJob }));
@@ -31,6 +32,7 @@ vi.mock('../queries/useValidation', () => ({
   useValidationFindings: mocks.useValidationFindings,
   useTriggerAiValidation: mocks.useTriggerAiValidation,
   useReviewValidationFinding: mocks.useReviewValidationFinding,
+  useApplyAiFix: mocks.useApplyAiFix,
 }));
 
 const conversion: ConversionJob = {

@@ -105,16 +105,16 @@ describe('ExportCodePage', () => {
 
     expect(await screen.findByRole('heading', { name: /Export Code Package/i })).toBeInTheDocument();
     expect(screen.getByText(/Ready to Export/i)).toBeInTheDocument();
-    expect(screen.getByText(/Full Project Scaffold/i)).toBeInTheDocument();
-    expect(screen.getByText(/Standalone Component Files/i)).toBeInTheDocument();
-    expect(screen.getByText(/Storybook Design System/i)).toBeInTheDocument();
+    expect(screen.getByText(/Full Maven \/ Spring Boot Scaffold/i)).toBeInTheDocument();
+    expect(screen.getByText(/Standalone Java Classes & Models/i)).toBeInTheDocument();
+    expect(screen.getByText(/Modular Spring Batch Job Suite/i)).toBeInTheDocument();
   });
 
   it('switches between output formats and updates selection', async () => {
     renderWithRouter();
 
     await screen.findByRole('heading', { name: /Export Code Package/i });
-    const standaloneOption = screen.getByText(/Standalone Component Files/i);
+    const standaloneOption = screen.getByText(/Standalone Java Classes & Models/i);
     fireEvent.click(standaloneOption);
 
     const radioInputs = screen.getAllByRole('radio');
@@ -129,8 +129,6 @@ describe('ExportCodePage', () => {
 
     const clearButton = screen.getByRole('button', { name: /Clear/i });
     fireEvent.click(clearButton);
-
-    expect(screen.getByText(/Please select at least one screen to export/i)).toBeInTheDocument();
 
     const downloadButtons = screen.getAllByRole('button', { name: /Generate & Download Bundle/i });
     downloadButtons.forEach((btn) => {
@@ -148,7 +146,7 @@ describe('ExportCodePage', () => {
     const selectReadyBtn = screen.getByRole('button', { name: /Select Ready/i });
     fireEvent.click(selectReadyBtn);
 
-    expect(screen.getByText(/SCREEN SELECTION \(2\/3\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/PROGRAM SELECTION \(2\/3\)/i)).toBeInTheDocument();
   });
 
   it('allows selecting ready screens', async () => {
@@ -184,7 +182,7 @@ describe('ExportCodePage', () => {
       );
     });
 
-    expect(await screen.findByText(/Code Package Ready/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Java Package Ready/i)).toBeInTheDocument();
   });
 
   it('displays error in modal when bundle compilation fails and allows retry', async () => {

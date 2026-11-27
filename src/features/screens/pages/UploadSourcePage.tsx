@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { UploadCloud, FileText, CheckCircle2, ArrowRight, Trash2, FolderPlus, FolderUp, Code2, Play, Eye, AlertCircle } from 'lucide-react';
 import { conversionService } from '@/features/conversion/services/conversion.service';
 import { projectService } from '@/features/projects/services/project.service';
@@ -11,6 +11,7 @@ import { Button } from '@/shared/ui/Button';
 import { Modal } from '@/shared/ui/Modal';
 import { ProgressBar } from '@/shared/ui/ProgressBar';
 import { ModernizationWorkflow } from '@/shared/ui/ModernizationWorkflow';
+import { getCachedProjectConversionType } from '@/shared/utils/projectCache';
 
 /** Source types that are uploaded and listed as programs rather than screens. */
 const PROGRAM_TYPES = new Set(['COBOL', 'RPG']);
@@ -85,6 +86,9 @@ async function extractFilesFromDataTransfer(dataTransfer: DataTransfer): Promise
 export const UploadSourcePage: React.FC = () => {
   const { projectId: routeProjectId } = useParams<{ projectId?: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const locationState = location.state as { workspace?: string; tab?: string } | null;
 
   const [userProjects, setUserProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<string>(routeProjectId || '');
@@ -95,6 +99,15 @@ export const UploadSourcePage: React.FC = () => {
   const [pageSize, setPageSize] = useState(20);
 
   const activeProjectId = routeProjectId || selectedProjectId || 'proj-acme';
+
+  const urlTab = searchParams.get('tab') || searchParams.get('type');
+  const cachedConversionType = getCachedProjectConversionType(activeProjectId);
+  const isInitialCobol =
+    urlTab === 'programs' ||
+    urlTab === 'cobol' ||
+    locationState?.tab === 'programs' ||
+    locationState?.workspace === 'PROGRAMS' ||
+    cachedConversionType === 'COBOL_TO_JAVA';
 
   // Load available user projects for selector if on direct /project-files page
   React.useEffect(() => {
@@ -149,6 +162,7 @@ export const UploadSourcePage: React.FC = () => {
   }, [activeProjectId]);
 
   const isProgramProject =
+    isInitialCobol ||
     project?.conversionType === 'COBOL_TO_JAVA' ||
     (programFiles.length > 0 && screenFiles.length === 0);
 
@@ -395,7 +409,13 @@ export const UploadSourcePage: React.FC = () => {
           )}
 
           <Button
-            onClick={() => navigate(ROUTES.PROJECTS.SCREENS(activeProjectId))}
+            onClick={() =>
+              navigate(
+                isProgramProject
+                  ? `${ROUTES.PROJECTS.SCREENS(activeProjectId)}?tab=programs&stage=analyze`
+                  : ROUTES.PROJECTS.SCREENS(activeProjectId)
+              )
+            }
             className="bg-[#244A70] hover:bg-[#1B3856] text-white space-x-1.5 text-xs font-bold shadow-xs cursor-pointer"
           >
             <span>Proceed to {activeTab === 'screens' ? 'Screens List' : 'Programs List'}</span>
@@ -411,8 +431,12 @@ export const UploadSourcePage: React.FC = () => {
         completedSteps={[]}
         onStepClick={(stepId) => {
           if (isProgramProject) {
-            if (stepId === 'analyze' || stepId === 'convert' || stepId === 'validate') {
-              navigate(ROUTES.PROJECTS.SCREENS(activeProjectId));
+            if (stepId === 'analyze') {
+              navigate(`${ROUTES.PROJECTS.SCREENS(activeProjectId)}?tab=programs&stage=analyze`);
+            } else if (stepId === 'convert') {
+              navigate(`${ROUTES.PROJECTS.SCREENS(activeProjectId)}?tab=programs&stage=convert`);
+            } else if (stepId === 'validate') {
+              navigate(`${ROUTES.PROJECTS.SCREENS(activeProjectId)}?tab=programs&stage=validate`);
             } else if (stepId === 'review' || stepId === 'result') {
               navigate(ROUTES.PROJECTS.REVIEW(activeProjectId, programFiles[0]?.screenId || '1'));
             } else if (stepId === 'export') {

@@ -89,9 +89,9 @@ describe('ScreensListPage', () => {
     });
   });
 
-  const renderPage = (projectId = 'proj-123') => {
+  const renderPage = (projectId = 'proj-123', query = '') => {
     return render(
-      <MemoryRouter initialEntries={[`/projects/${projectId}/screens`]}>
+      <MemoryRouter initialEntries={[`/projects/${projectId}/screens${query}`]}>
         <Routes>
           <Route path="/projects/:projectId/screens" element={<ScreensListPage />} />
           <Route path="/projects/:projectId/screens/bulk-convert" element={<div>Bulk Convert Page</div>} />
@@ -120,7 +120,7 @@ describe('ScreensListPage', () => {
   it('renders COBOL programs workspace for dedicated COBOL project', async () => {
     mocks.getProjectById.mockResolvedValue({ id: 'proj-cobol', conversionType: 'COBOL_TO_JAVA' });
     mocks.getScreens.mockResolvedValue(mockScreens);
-    renderPage('proj-cobol');
+    renderPage('proj-cobol', '?stage=convert');
 
     expect(await screen.findByText('CBACT01C.cbl')).toBeInTheDocument();
     expect(screen.getByText('Programs Workspace')).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe('ScreensListPage', () => {
       status: 'READY_FOR_CONVERSION',
       dependencies: [],
     });
-    renderPage('proj-cobol');
+    renderPage('proj-cobol', '?stage=convert');
 
     expect(await screen.findByText('CBACT01C.cbl')).toBeInTheDocument();
     expect(screen.getByText('Programs Workspace')).toBeInTheDocument();
