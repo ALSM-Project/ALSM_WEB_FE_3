@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { conversionService } from '@/features/conversion/services/conversion.service';
 import { projectService } from '@/features/projects/services/project.service';
+import { isCobolProjectSync } from '@/shared/utils/projectCache';
 import type { Project } from '@/features/projects/types/project';
 import type { LegacyScreen } from '../types/screen';
 import { ROUTES } from '@/shared/constants/routes';
@@ -36,7 +37,7 @@ const PROGRAM_SOURCE_TYPES = new Set(['COBOL', 'RPG']);
 export const ScreensListPage: React.FC = () => {
   const { projectId = 'proj-acme' } = useParams();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [project, setProject] = useState<Project | null>(null);
   const [allAssets, setAllAssets] = useState<LegacyScreen[]>([]);
@@ -54,12 +55,29 @@ export const ScreensListPage: React.FC = () => {
   const [toast, setToast] = useState<string | null>(null);
 
   // Sub-stage for COBOL workspace: Stage 2 (Analyze & Prepare), Stage 3 (Convert to Java), Stage 4 (Validate & Build)
-  const initialStage = searchParams.get('stage') === 'convert'
-    ? 'CONVERT'
-    : searchParams.get('stage') === 'validate'
-    ? 'VALIDATE'
-    : 'ANALYZE';
+  const getStageFromParam = (param: string | null): 'ANALYZE' | 'CONVERT' | 'VALIDATE' => {
+    const s = param?.toLowerCase();
+    if (s === 'convert') return 'CONVERT';
+    if (s === 'validate') return 'VALIDATE';
+    return 'ANALYZE';
+  };
+
+  const initialStage = getStageFromParam(searchParams.get('stage'));
   const [cobolStage, setCobolStage] = useState<'ANALYZE' | 'CONVERT' | 'VALIDATE'>(initialStage);
+
+  useEffect(() => {
+    const stageFromUrl = getStageFromParam(searchParams.get('stage'));
+    setCobolStage(stageFromUrl);
+  }, [searchParams]);
+
+  const updateCobolStage = (stage: 'ANALYZE' | 'CONVERT' | 'VALIDATE') => {
+    setCobolStage(stage);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('stage', stage.toLowerCase());
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (projectId) {
@@ -111,8 +129,13 @@ export const ScreensListPage: React.FC = () => {
   const screens = allAssets.filter((a) => !PROGRAM_SOURCE_TYPES.has(a.sourceType));
   const programs = allAssets.filter((a) => PROGRAM_SOURCE_TYPES.has(a.sourceType));
 
+  const isCobolInit = isCobolProjectSync(projectId);
+
   // A project is dedicated either to screens OR to programs
   const isProgramProject =
+    isCobolInit ||
+    searchParams.get('tab') === 'programs' ||
+    searchParams.get('type') === 'programs' ||
     project?.conversionType === 'COBOL_TO_JAVA' ||
     (allAssets.length > 0 && allAssets.every((a) => PROGRAM_SOURCE_TYPES.has(a.sourceType))) ||
     (programs.length > 0 && screens.length === 0);
@@ -201,21 +224,43 @@ export const ScreensListPage: React.FC = () => {
     processing: activeFullList.filter((a) => a.status === 'Processing' || a.status === 'Queued').length,
   };
 
+  const navigateToUpload = () => {
+    navigate(
+      isProgramProject
+        ? `${ROUTES.PROJECTS.UPLOAD(projectId)}?tab=programs`
+        : ROUTES.PROJECTS.UPLOAD(projectId),
+      {
+        state: {
+          workspace: isProgramProject ? 'PROGRAMS' : 'SCREENS',
+          tab: isProgramProject ? 'programs' : 'screens',
+        },
+      }
+    );
+  };
+
   const handleWorkflowStepClick = (stepId: string) => {
-    const firstId = activeList[0]?.id || activeFullList[0]?.id || '1';
+    const firstCompleted =
+      activeFullList.find(
+        (a) =>
+          a.status === 'Completed' ||
+          a.status === 'Converted' ||
+          (a.status as string) === 'COMPLETED',
+      ) ?? activeList[0] ?? activeFullList[0];
+    const targetId = firstCompleted?.id || '1';
+
     if (isProgramProject) {
-      if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-      if (stepId === 'analyze') setCobolStage('ANALYZE');
-      if (stepId === 'convert') setCobolStage('CONVERT');
-      if (stepId === 'validate') setCobolStage('VALIDATE');
-      if (stepId === 'review' || stepId === 'result') navigate(ROUTES.PROJECTS.REVIEW(projectId, firstId));
+      if (stepId === 'upload') navigateToUpload();
+      if (stepId === 'analyze') updateCobolStage('ANALYZE');
+      if (stepId === 'convert') updateCobolStage('CONVERT');
+      if (stepId === 'validate') updateCobolStage('VALIDATE');
+      if (stepId === 'review' || stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, targetId));
       if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
     } else {
-      if (stepId === 'upload') navigate(ROUTES.PROJECTS.UPLOAD(projectId));
-      if (stepId === 'mapping') navigate(ROUTES.PROJECTS.MAPPING(projectId, firstId));
+      if (stepId === 'upload') navigateToUpload();
+      if (stepId === 'mapping') navigate(ROUTES.PROJECTS.MAPPING(projectId, targetId));
       if (stepId === 'conversion' || stepId === 'convert') navigate(ROUTES.PROJECTS.SCREENS(projectId));
-      if (stepId === 'validation' || stepId === 'validate' || stepId === 'review') navigate(ROUTES.PROJECTS.REVIEW(projectId, firstId));
-      if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, firstId));
+      if (stepId === 'validation' || stepId === 'validate' || stepId === 'review') navigate(ROUTES.PROJECTS.REVIEW(projectId, targetId));
+      if (stepId === 'result') navigate(ROUTES.PROJECTS.RESULT(projectId, targetId));
       if (stepId === 'export') navigate(ROUTES.PROJECTS.EXPORT(projectId));
     }
   };
@@ -241,7 +286,7 @@ export const ScreensListPage: React.FC = () => {
               <span>Bulk Convert</span>
             </Button>
             <Button
-              onClick={() => navigate(ROUTES.PROJECTS.UPLOAD(projectId))}
+              onClick={navigateToUpload}
               className="bg-[#244A70] hover:bg-[#1B3856] text-white space-x-1.5 text-xs font-bold shadow-xs"
             >
               <Plus className="w-4 h-4" />
@@ -305,45 +350,6 @@ export const ScreensListPage: React.FC = () => {
         onStepClick={handleWorkflowStepClick}
       />
 
-      {/* COBOL-Specific Sub-stage Navigation Tabs (Pills) */}
-      {isProgramProject && (
-        <div className="flex items-center gap-2 border-b border-[#E2E8F0] pb-2">
-          <button
-            type="button"
-            onClick={() => setCobolStage('ANALYZE')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              cobolStage === 'ANALYZE'
-                ? 'bg-[#244A70] text-white shadow-xs'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            Stage 2 — Analyze & Prepare (Passes 1–2.4)
-          </button>
-          <button
-            type="button"
-            onClick={() => setCobolStage('CONVERT')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              cobolStage === 'CONVERT'
-                ? 'bg-[#244A70] text-white shadow-xs'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            Stage 3 — Convert to Java (Pass 2.5)
-          </button>
-          <button
-            type="button"
-            onClick={() => setCobolStage('VALIDATE')}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              cobolStage === 'VALIDATE'
-                ? 'bg-[#244A70] text-white shadow-xs'
-                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            Stage 4 — Validate & Build (Pass 3)
-          </button>
-        </div>
-      )}
-
       {/* STAGE 2: Analyze & Prepare Transpiler Passes */}
       {isProgramProject && cobolStage === 'ANALYZE' && (
         <div className="space-y-6">
@@ -357,7 +363,7 @@ export const ScreensListPage: React.FC = () => {
 
           <div className="flex justify-end pt-2">
             <Button
-              onClick={() => setCobolStage('CONVERT')}
+              onClick={() => updateCobolStage('CONVERT')}
               className="bg-[#244A70] hover:bg-[#1B3856] text-white space-x-2 text-xs font-bold px-5 py-2.5 shadow-xs cursor-pointer"
             >
               <span>Proceed to Convert to Java (Pass 2.5)</span>
@@ -377,21 +383,9 @@ export const ScreensListPage: React.FC = () => {
         />
       )}
 
-      {/* Data Table & Metrics (Rendered on Stage 2 & 3 for COBOL, or always for Screens) */}
-      {(!isProgramProject || cobolStage === 'CONVERT' || cobolStage === 'ANALYZE') && (
+      {/* Data Table & Metrics (Rendered on Stage 3 for COBOL, or always for Screens) */}
+      {(!isProgramProject || cobolStage === 'CONVERT') && (
         <div className="space-y-6">
-          {/* Section Header when on Stage 2 */}
-          {isProgramProject && cobolStage === 'ANALYZE' && (
-            <div className="pt-4 border-t border-[#E2E8F0]">
-              <h3 className="text-sm font-bold text-[#091E42]">
-                Indexed COBOL Programs ({activeFullList.length})
-              </h3>
-              <p className="text-xs text-[#64748B] mt-0.5">
-                Programs identified and preprocessed during Transpiler Passes 1–2.4, ready for code generation.
-              </p>
-            </div>
-          )}
-
           {/* Metric Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <button
@@ -594,7 +588,7 @@ export const ScreensListPage: React.FC = () => {
                           {item.status === 'Failed' ? (
                             <>
                               <Link
-                                to={ROUTES.PROJECTS.DIAGNOSTICS(projectId)}
+                                to={`${ROUTES.PROJECTS.DIAGNOSTICS(projectId)}?file=${encodeURIComponent(item.name)}`}
                                 className="inline-flex items-center space-x-1 text-xs text-rose-700 font-semibold bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-md transition-colors"
                               >
                                 <Stethoscope className="w-3.5 h-3.5" />
@@ -726,7 +720,7 @@ export const ScreensListPage: React.FC = () => {
           {isProgramProject && cobolStage === 'CONVERT' && (
             <div className="flex justify-end pt-4 border-t border-[#E2E8F0]">
               <Button
-                onClick={() => setCobolStage('VALIDATE')}
+                onClick={() => updateCobolStage('VALIDATE')}
                 className="bg-[#244A70] hover:bg-[#1B3856] text-white space-x-2 text-xs font-bold px-5 py-2.5 shadow-xs cursor-pointer"
               >
                 <span>Proceed to Validate & Build (Pass 3)</span>

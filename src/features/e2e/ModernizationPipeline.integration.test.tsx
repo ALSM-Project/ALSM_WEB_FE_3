@@ -312,6 +312,6 @@ describe('ALSM_WEB_FE_3 End-to-End Workflow Integration', () => {
       expect(exportService.downloadZipBundleFromApi).toHaveBeenCalled();
       expect(exportService.downloadBlob).toHaveBeenCalled();
     });
-    expect(await screen.findByText(/Code Package Ready/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Java Package Ready|Code Package Ready/i)).toBeInTheDocument();
   });
 });

@@ -244,13 +244,13 @@ describe('ConvertScreenPage - COBOL screens route to Method Mapping, not Field M
     lastUpdated: 'just now',
   };
 
-  it('shows a Method Mapping tab, not Field Mapping, for a COBOL screen', async () => {
+  it('shows Edit Method Mapping, not Field Mapping, for a COBOL screen', async () => {
     mocks.getScreenById.mockResolvedValue(cobolScreen);
     mocks.getLatestConversion.mockResolvedValue(null);
 
     renderPage();
 
-    expect(await screen.findByText('Method Mapping')).toBeInTheDocument();
+    expect((await screen.findAllByRole('button', { name: /Edit Method Mapping/i })).length).toBeGreaterThan(0);
     expect(screen.queryByText('Field Mapping')).not.toBeInTheDocument();
   });
 
@@ -262,7 +262,7 @@ describe('ConvertScreenPage - COBOL screens route to Method Mapping, not Field M
     mocks.getLatestConversion.mockResolvedValue(null);
 
     renderPage();
-    await screen.findByText('Method Mapping');
+    await screen.findAllByRole('button', { name: /Edit Method Mapping/i });
 
     expect(mocks.getFieldMappings).not.toHaveBeenCalled();
   });

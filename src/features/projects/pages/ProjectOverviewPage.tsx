@@ -431,6 +431,7 @@ const ProjectOverviewContent: React.FC = () => {
         <div className="space-y-6">
           {/* Modernization Workflow Progress Bar */}
           <ModernizationWorkflow
+            workflowType={isCobolProject ? 'PROGRAMS' : 'SCREENS'}
             currentStep={currentStep}
             completedSteps={completedSteps}
             onStepClick={(stepId) => {

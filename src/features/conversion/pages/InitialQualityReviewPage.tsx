@@ -155,7 +155,7 @@ const InitialQualityReviewContent: React.FC = () => {
   if (jobLoading || (job && job.status === 'COMPLETED' && reviewLoading && !qualityReviewData)) {
     return (
       <div className="w-full space-y-6 min-w-0">
-        <ModernizationWorkflow currentStep="convert" completedSteps={['upload']} />
+        <ModernizationWorkflow workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'} currentStep="convert" completedSteps={['upload']} />
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm">
           <LoaderCircle className="w-8 h-8 text-[#0652CC] animate-spin" />
           <p className="text-sm font-medium text-slate-600">Loading conversion quality details...</p>
@@ -168,7 +168,7 @@ const InitialQualityReviewContent: React.FC = () => {
   if (!job) {
     return (
       <div className="w-full space-y-6 min-w-0">
-        <ModernizationWorkflow currentStep="convert" completedSteps={['upload']} />
+        <ModernizationWorkflow workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'} currentStep="convert" completedSteps={['upload']} />
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm">
           <AlertCircle className="w-10 h-10 text-slate-400" />
           <h2 className="text-base font-bold text-slate-900">No Conversion Job Found</h2>
@@ -187,7 +187,7 @@ const InitialQualityReviewContent: React.FC = () => {
   if (job.status !== 'COMPLETED') {
     return (
       <div className="w-full space-y-6 min-w-0">
-        <ModernizationWorkflow currentStep="convert" completedSteps={['upload']} />
+        <ModernizationWorkflow workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'} currentStep="convert" completedSteps={['upload']} />
         <div className="bg-white border border-slate-200 rounded-xl p-12 text-center flex flex-col items-center justify-center space-y-4 shadow-sm">
           <Clock3 className="w-10 h-10 text-amber-500" />
           <h2 className="text-base font-bold text-slate-900">Conversion In Progress or Not Complete</h2>
@@ -218,6 +218,7 @@ const InitialQualityReviewContent: React.FC = () => {
     <div className="w-full space-y-6 min-w-0">
       {/* Stepper Header */}
       <ModernizationWorkflow
+        workflowType={isCobol ? 'PROGRAMS' : 'SCREENS'}
         currentStep="convert"
         completedSteps={['upload']}
         onStepClick={(step) => {
